@@ -6,6 +6,8 @@
 #include "Observer.h"
 #include "Sink.h"
 #include "Signal.h"
+#include "Handler.h"
+#include "Dispatcher.h"
 
 struct Health
 {
@@ -23,9 +25,15 @@ struct emptyComponent
 
 class PlayerTag : public TagBase {};
 
-void onEntityDestroyed(uint32_t entityID)
+
+struct EntityDestroyedEvent
 {
-	std::cout << "Entity destroyed " << entityID << "\n";
+	uint32_t entityID;
+};
+
+void onEntityDestroyed(const EntityDestroyedEvent& e)
+{
+	std::cout << "Entity destroyed " << e.entityID << "\n";
 }
 
 int main()
@@ -83,12 +91,22 @@ int main()
 	DebugFunctions::Access::view_dense_size<Health>(world);
 	std::cout << std::boolalpha << view.empty();
 
+	/*
 	Signal<void(int)> signal;
 	Sink<void(int)> sink{ &signal };
 	sink.connect<&onEntityDestroyed>();
-	std::cout << "Connected";
 	signal.publish(42);
 	sink.disconnect<&onEntityDestroyed>();
+	*/
 
-	
+	Dispatcher dispatcher;
+	dispatcher.sink<EntityDestroyedEvent>().connect<&onEntityDestroyed>();
+
+	//immediate fire
+	dispatcher.trigger(EntityDestroyedEvent{ 42 });
+
+	//deferred
+	dispatcher.enqueue(EntityDestroyedEvent{ 99 });
+
+	dispatcher.update();
 }

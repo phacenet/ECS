@@ -20,7 +20,7 @@ template <typename T>
 template <auto Function, typename... BoundArgs>
 void Sink<T>::connect(BoundArgs&&... args)
 {
-	m_signal->connect<Function>(std::forward<BoundArgs>>(args)...);
+	m_signal->connect<Function>(std::forward<BoundArgs>(args)...);
 }
 
 template <typename T>

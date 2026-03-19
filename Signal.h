@@ -39,5 +39,4 @@ public:
 };
 
 
-
 #include "Signal.ipp"
