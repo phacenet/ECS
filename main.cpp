@@ -4,7 +4,8 @@
 #include "World.h"
 #include "DebugFunctions.h"
 #include "Observer.h"
-
+#include "Sink.h"
+#include "Signal.h"
 
 struct Health
 {
@@ -21,6 +22,11 @@ struct emptyComponent
 
 
 class PlayerTag : public TagBase {};
+
+void onEntityDestroyed(uint32_t entityID)
+{
+	std::cout << "Entity destroyed " << entityID << "\n";
+}
 
 int main()
 {
@@ -75,6 +81,14 @@ int main()
 
 	std::cout << view.size() << "\n";
 	DebugFunctions::Access::view_dense_size<Health>(world);
-
 	std::cout << std::boolalpha << view.empty();
+
+	Signal<void(int)> signal;
+	Sink<void(int)> sink{ &signal };
+	sink.connect<&onEntityDestroyed>();
+	std::cout << "Connected";
+	signal.publish(42);
+	sink.disconnect<&onEntityDestroyed>();
+
+	
 }

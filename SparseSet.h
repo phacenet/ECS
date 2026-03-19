@@ -131,6 +131,10 @@ public:
 		m_sparse[entityID] = static_cast<uint32_t>(m_dense.size());
 		m_dense.emplace_back(entityID);
 
+		/* Add entityID to each observer's matchingEntities list */
+		for (ObserverBase* obs : m_observersOnAdd)
+			obs->notifyAdd(entityID);
+
 		return true;
 	}
 
@@ -138,6 +142,10 @@ public:
 	{
 		if (!has(entityID))
 			return false;
+
+		/* Before swap and pop, otherwise searches for garbage */
+		for (ObserverBase* obs : m_observersOnAdd)
+			obs->notifyRemove(entityID);
 
 		uint32_t dense_index = m_sparse[entityID];
 		uint32_t last_val = m_dense[m_dense.size() - 1];

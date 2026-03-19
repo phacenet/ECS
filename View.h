@@ -22,7 +22,7 @@ public:
 	template <typename T>
 	T& get(uint32_t entityID);
 
-	uint32_t size();
+	size_t size();
 	bool empty();
 };
 

@@ -64,7 +64,7 @@ T& View<Args...>::get(uint32_t entityID)
 
 // Size of smallest storage's dense array
 template <typename ...Args>
-uint32_t View<Args...>::size()
+size_t View<Args...>::size()
 {
 	return m_smallest_storage->getDenseSize();
 }
