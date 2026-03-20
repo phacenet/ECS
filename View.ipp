@@ -31,7 +31,7 @@ View<Args...>::View(World& world)
 template <typename ...Args>
 bool View<Args...>::contains(uint32_t entityID)
 {
-	return ((std::get<SparseSet<Args>*>(m_storage))->has(entityID) || ...);
+	return ((std::get<SparseSet<Args>*>(m_storage))->has(entityID) && ...);
 }
 
 template <typename ...Args>
@@ -40,15 +40,21 @@ void View<Args...>::each(T&& lambda)
 {
 	for (uint32_t entityID : m_smallest_storage->getDense())
 	{
+		/*
+			MUST evaluate entire fold first or a nasty bug where get is called on an OOB index can occur
+			Compiler can evaluate RHS of && even if left side is false, because order is unspecified
+		*/
+		bool all_have = (std::get<SparseSet<Args>*>(m_storage)->has(entityID) && ...);
+
 		if constexpr (std::is_invocable_v<T, uint32_t, Args&...>)
 		{
-			if (((std::get<SparseSet<Args>*>(m_storage)->has(entityID)) && ...))
+			if (all_have)
 				lambda(entityID, (std::get<SparseSet<Args>*>(m_storage)->get(entityID))...);
 		}
 
 		else
 		{
-			if (((std::get<SparseSet<Args>*>(m_storage)->has(entityID)) && ...))
+			if (all_have)
 				lambda((std::get<SparseSet<Args>*>(m_storage)->get(entityID))...);
 		}
 	}

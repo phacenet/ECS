@@ -47,21 +47,21 @@ public:
 			return false;
 
 		/* Before swap and pop, otherwise searches for garbage */
-		for (ObserverBase* obs : m_observersOnAdd)
-			obs->notifyRemove(entityID);
+		for (ObserverBase* obs : m_observersOnRemove)
+			obs->notifyAdd(entityID); //changed from notifyRemove(entityID). never got added to m_matchingentities before
 
 		uint32_t dense_index = m_sparse[entityID];
-		uint32_t last_val = m_dense[m_dense.size() - 1];
+		uint32_t last_val = m_dense.back();
 
 		/* Self - swap no-op on self in [utility.requirements] section 15.5.3.2 */
-		std::swap(m_dense[dense_index], m_dense[m_dense.size() - 1]);
-		std::swap(m_data[dense_index], m_data[m_data.size() - 1]);
+		std::swap(m_dense[dense_index], m_dense.back());
+		std::swap(m_data[dense_index], m_data.back());
 		uint32_t change_val = m_dense[dense_index];
 
 		m_dense.pop_back();
 		m_data.pop_back();
 		
-		m_sparse[last_val] = dense_index;
+		m_sparse[change_val] = dense_index;
 		m_sparse[entityID] = UINT32_MAX;
 
 		return true;
@@ -88,8 +88,6 @@ public:
 	}
 
 	std::vector<T>& iterate() { return m_data; }
-
-	//virtual size_t getDataSize() override { return m_data.size(); }
 
 	const std::vector<uint32_t>& getDense() { return m_dense; }
 
@@ -144,22 +142,20 @@ public:
 			return false;
 
 		/* Before swap and pop, otherwise searches for garbage */
-		for (ObserverBase* obs : m_observersOnAdd)
-			obs->notifyRemove(entityID);
+		for (ObserverBase* obs : m_observersOnRemove)
+			obs->notifyAdd(entityID);
 
 		uint32_t dense_index = m_sparse[entityID];
-		uint32_t last_val = m_dense[m_dense.size() - 1];
+		uint32_t last_val = m_dense.back();
 
 		/* Self - swap no-op on self in [utility.requirements] section 15.5.3.2 */
-		std::swap(m_dense[dense_index], m_dense[m_dense.size() - 1]);
+		std::swap(m_dense[dense_index], m_dense.back());
 		uint32_t change_val = m_dense[dense_index];
 
 		m_dense.pop_back();
-
-		m_sparse[last_val] = dense_index;
+		
+		m_sparse[change_val] = dense_index;
 		m_sparse[entityID] = UINT32_MAX;
-
-		return true;
 	}
 
 	virtual bool has(uint32_t entityID) override

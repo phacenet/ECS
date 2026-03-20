@@ -9,6 +9,7 @@
 #include "Handler.h"
 #include "Dispatcher.h"
 
+
 struct Health
 {
 	float health = 100.0f;
@@ -21,7 +22,6 @@ struct Stamina
 
 struct emptyComponent
 { };
-
 
 class PlayerTag : public TagBase {};
 
@@ -38,6 +38,8 @@ void onEntityDestroyed(const EntityDestroyedEvent& e)
 
 int main()
 {
+	/* General Initialization */
+	/* ========================================================= */
 	World world;
 
 	auto entity0 = world.createEntity();
@@ -45,27 +47,62 @@ int main()
 	auto entity2 = world.createEntity();
 	auto entity3 = world.createEntity();
 	auto entity4 = world.createEntity();
+	//std::vector<uint32_t> fiveEntities = createEntities(5);
 
+	//addComponent will lazy register as well, no need to register all ahead of time
 	world.registerComponent<Health>();
 	world.registerComponent<Stamina>();
 	world.registerComponent<PlayerTag>();
+	/* ========================================================= */
 
+
+	/* Debug World Functionality */
+	/* ========================================================= */
 	DebugFunctions::Access::view_all_IDs(world);
 	DebugFunctions::Access::view_next_freeID(world);
 	DebugFunctions::Access::view_all_components(world);
+	/* ========================================================= */
 
+
+	/* Observer */
+	/*
+		For monitoring when a Component is added or removed from an entity. 
+		Internally stores vector of entities that have had the component
+		added or removed since the observer was created.
+
+		Can only observe one component per call currently. Need to add ability
+		to take variadic pack: obs->observeAdd<Health, Stamina>(), etc.
+	*/
+	/* ========================================================= */
 	Observer* obs = new Observer(world);
 	obs->observeAdd<Health>();
+	obs->observeRemove<Health>();
 
-	world.addComponents<Health, Stamina>({ entity1, entity2 });
-	world.addComponent<Health>(entity3);
+	world.addComponents<Health, Stamina>({ entity0, entity1 });
+	world.addComponent<Health>(entity2);
 
+	// Run passed lambda on each entity contained in internal vector since observer's inception
 	obs->each([&world](uint32_t entityID)
 		{
 			auto& health = world.getComponentData<Health>(entityID);
 			health.health -= 10.0f;
-		}
-	);
+		});
+
+	//Clear internal vector to prevent repeat
+	obs->clear();
+
+	//Internal list is currently empty
+	assert(obs->size() == 0);
+
+	world.removeComponent<Health>(entity0);
+	assert(obs->size() == 1);
+	obs->each([&world](uint32_t entityID)
+		{
+			std::cout << "Entity" << entityID << " lost its Health parameter\n";
+		});
+
+	/* ========================================================= */
+
 
 	auto view = world.view<Health, Stamina>();
 	std::cout << "Contains both entity1 and entity2: " << std::boolalpha << view.contains(entity1) << ", " << view.contains(entity2) << "\n";
@@ -83,7 +120,7 @@ int main()
 	view.each(viewLambda);
 	view.each(printLambda);
 
-	auto& h = view.get<Health>(entity1);
+	auto& h = view.get<Health>(entity2);
 	h.health -= 10.0f;
 	view.each(printLambda);
 

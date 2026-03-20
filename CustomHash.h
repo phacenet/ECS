@@ -2,7 +2,6 @@
 
 #include "Core.h"
 
-
 /* Compute hash of each type_index in vector, and perform bitwise shift and XOR */
 struct vector_typeIndex_hash
 {

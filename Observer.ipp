@@ -24,7 +24,7 @@ void Observer::observeAdd()
 
 	/* Add ObserverBase object to SparseSet's container */
 	ss->addObserverOnAdd(this); //addObserverOnAdd takes a ptr, so use this, not *this.
-	//also implicit upcast to ObserverBase
+								//also implicit upcast to ObserverBase
 }
 
 /* Add "remove" observer to corresponding SparseSet<T>'s m_observersOnRemove */
@@ -36,7 +36,7 @@ void Observer::observeRemove()
 
 	/* Add ObserverBase object to SparseSet's container */
 	ss->addObserverOnRemove(this);  //addObserverOnAdd takes a ptr, so use this, not *this.
-	//also implicit upcast to ObserverBase
+									//also implicit upcast to ObserverBase
 }
 
 /* Method to push entityID into m_matchingEntities */
@@ -65,4 +65,9 @@ void Observer::each(T&& func)
 		uint32_t entityID = m_matchingEntities[i];
 		std::forward<T>(func)(entityID);
 	}
+}
+
+size_t Observer::size()
+{
+	return m_matchingEntities.size();
 }

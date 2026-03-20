@@ -2,6 +2,9 @@
 
 #include "Core.h"
 #include "World.h"
+#include "Dispatcher.h"
+#include "Signal.h"
+#include "Sink.h"
 
 namespace DebugFunctions
 {
@@ -78,7 +81,6 @@ namespace DebugFunctions
 			uint32_t index = getTypeIndex<T>();
 			std::cout << "Component: \"" << std::type_index(typeid(T)).name() << "\" has a dense size of: " << world.m_components[index]->getDenseSize() << "\n";
 		}
-	
 		
 	};
 }

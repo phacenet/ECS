@@ -1,6 +1,8 @@
 #pragma once
 
-#include "Core.h"
+#include <cstdint>
+#include <vector>
+#include <typeindex>
 
 /* Can remove and check if entityID is in SparseSet without downcasting */
 class ComponentStorage
