@@ -260,6 +260,8 @@ int main()
 		* Used for attaching some data, an "Event" to an arbitrary function, and firing it manually
 		* Signal is the bookeeping class, and sink is the public interface
 		* Useful for manually firing multiple stored functions at once
+		* Essentially, the event is the params for the function to operate on, similar to a lambda:
+		* [](event){do stuff};
 	*/
 	/* ========================================================= */
 	printStart("Signal/Sink:");
