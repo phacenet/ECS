@@ -19,7 +19,7 @@ void Signal<Ret(Args...)>::connect(BoundArgs&&... args)
 	*/
 
 	CallbackToken token;
-	token.functionPtr = reinterpret_cast<const void*>(Function);
+	token.functionPtr = getFunctionID<Function>();
 	
 	if constexpr (sizeof...(args) > 0)
 	{
@@ -64,7 +64,7 @@ template <auto Function, typename... BoundArgs>
 void Signal<Ret(Args...)>::disconnect(BoundArgs&&... args)
 {
 	CallbackToken token;
-	token.functionPtr = reinterpret_cast<const void*>(Function);
+	token.functionPtr = getFunctionID<Function>();
 
 	if constexpr (sizeof...(args) > 0)
 	{
@@ -80,8 +80,18 @@ void Signal<Ret(Args...)>::disconnect(BoundArgs&&... args)
 	{
 		if (*it == token)
 		{
+			/* m_tokens and m_callbacks are always in sync, so calculate distance and erase from callbacks */
+			size_t vec_it = std::distance(m_tokens.begin(), it);
+
+			m_callbacks.erase(m_callbacks.begin() + vec_it);
 			m_tokens.erase(it);
 			break;
 		}
 	}
+}
+
+template <typename Ret, typename ...Args>
+bool Signal<Ret(Args...)>::empty()
+{
+	return (m_callbacks.empty() && m_tokens.empty());
 }

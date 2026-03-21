@@ -11,6 +11,8 @@ private:
 	std::tuple<SparseSet<Args>*...> m_storage;
 	ComponentStorage* m_smallest_storage = nullptr;
 
+	void _recalc_();
+
 public:
 	explicit View(World& world);
 

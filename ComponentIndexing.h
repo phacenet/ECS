@@ -15,3 +15,10 @@ uint32_t getTypeIndex()
 	static uint32_t index = nextIndex(); //only ever runs once. static "=" only executes once ever
 	return index;
 }
+
+template <auto Function>
+const void* getFunctionID()
+{
+	static const int sentinel = 0;
+	return &sentinel;
+}

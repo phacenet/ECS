@@ -16,6 +16,7 @@ public:
 
 	template <auto Function, typename ...BoundArgs>
 	void disconnect(BoundArgs&&... args);
+
 };
 
 #include "Sink.ipp"

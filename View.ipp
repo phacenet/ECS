@@ -10,6 +10,21 @@ private:
 public:
 */
 
+//Private helper to recalc m_smallest_storage
+template <typename ...Args>
+void View<Args...>::_recalc_()
+{
+	auto tmp = std::apply([](auto&&... ptrs) {return std::array<ComponentStorage*, sizeof...(ptrs)>{ptrs...}; }, m_storage);
+
+	auto comp = [&](ComponentStorage* cmp1, ComponentStorage* cmp2) -> bool
+		{
+			return (cmp1->getDenseSize() < cmp2->getDenseSize());
+		};
+
+	auto it = std::min_element(tmp.begin(), tmp.end(), comp);
+	m_smallest_storage = *it;
+}
+
 //Ctor
 template <typename ...Args>
 View<Args...>::View(World& world)
@@ -38,20 +53,29 @@ template <typename ...Args>
 template <typename T>
 void View<Args...>::each(T&& lambda)
 {
+	_recalc_();
 	for (uint32_t entityID : m_smallest_storage->getDense())
 	{
 		/*
-			MUST evaluate entire fold first or a nasty bug where get is called on an OOB index can occur
+			* MUST evaluate entire fold first or a nasty bug where get is called on an OOB index can occur
 			Compiler can evaluate RHS of && even if left side is false, because order is unspecified
+			* Also recalc m_smallest_storage to reflect changes since view was captured. Entity could
+				have gained or lost Components since inception
 		*/
 		bool all_have = (std::get<SparseSet<Args>*>(m_storage)->has(entityID) && ...);
+
+
 
 		if constexpr (std::is_invocable_v<T, uint32_t, Args&...>)
 		{
 			if (all_have)
 				lambda(entityID, (std::get<SparseSet<Args>*>(m_storage)->get(entityID))...);
 		}
-
+		else if constexpr (std::is_invocable_v<T, uint32_t>)
+		{
+			if(all_have)
+				lambda(entityID);
+		}
 		else
 		{
 			if (all_have)

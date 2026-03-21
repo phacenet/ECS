@@ -54,12 +54,12 @@ namespace DebugFunctions
 			}
 		}
 
-		static void view_next_freeID(World& world)
+		static void view_next_freeID(const World& world)
 		{
 			std::cout << "ID on next createEntity(): " << world.m_nextEntityID << "\n";
 		}
 
-		static void view_all_components(World& world)
+		static void view_all_components(const World& world)
 		{
 			const char* seperator = "";
 			std::cout << "Component types: [";
@@ -76,12 +76,21 @@ namespace DebugFunctions
 		}
 
 		template <typename T>
-		static void view_dense_size(World& world)
+		static void view_dense_size(const World& world)
 		{
 			uint32_t index = getTypeIndex<T>();
 			std::cout << "Component: \"" << std::type_index(typeid(T)).name() << "\" has a dense size of: " << world.m_components[index]->getDenseSize() << "\n";
 		}
 		
+		template <typename T>
+		static void view_sparseSet_dense(const World& world)
+		{
+			uint32_t index = getTypeIndex<T>();
+			ComponentStorage* cs = world.m_components.at(index);
+			SparseSet<T>* ss = static_cast<SparseSet<T>*>(cs);
+			std::cout << "Component \"" << typeid(T).name() << "\" has a dense size of: " << ss->getDenseSize() << "\n";
+		}
+
 	};
 }
 

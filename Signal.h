@@ -2,7 +2,10 @@
 
 #include <vector>
 #include <functional>
+
 #include "SignalBase.h"
+#include "ComponentIndexing.h" //for storing a unique address for functionPtr
+#include <string> //temp for DEBUG
 
 struct CallbackToken
 {
@@ -36,6 +39,8 @@ public:
 
 	template <auto Function, typename... BoundArgs>
 	void disconnect(BoundArgs&&... args);
+
+	bool empty();
 };
 
 

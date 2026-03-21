@@ -27,5 +27,5 @@ template <typename T>
 template <auto Function, typename ...BoundArgs>
 void Sink<T>::disconnect(BoundArgs&&... args)
 {
-	m_signal->disconnect<Function>(std::forward<BoundArgs>>(args)...);
+	m_signal->disconnect<Function>(std::forward<BoundArgs>(args)...);
 }
