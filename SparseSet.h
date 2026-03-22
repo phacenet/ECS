@@ -15,18 +15,6 @@ private:
 	std::vector<ObserverBase*> m_observersOnAdd;
 	std::vector<ObserverBase*> m_observersOnRemove;
 
-	//Helpers
-	virtual std::vector<uint32_t>& getDenseMutable() override { return m_dense; }
-	virtual std::vector<uint32_t>& getSparseMutable() override { return m_sparse; }
-	virtual const std::vector<uint32_t>& getSparse() override { return m_sparse; }
-	std::vector<T>& getMutableData() { return m_data; }
-
-	virtual void swapData(uint32_t index1, uint32_t index2) override
-	{
-		std::swap(m_data[index1], m_data[index2]);
-	}
-
-
 public:
 	
 	template <typename U>
@@ -103,9 +91,6 @@ public:
 
 	virtual const std::vector<uint32_t>& getDense() override { return m_dense; }
 
-	void addObserverOnAdd(ObserverBase* obs) { m_observersOnAdd.emplace_back(obs); }
-	void addObserverOnRemove(ObserverBase* obs) { m_observersOnRemove.emplace_back(obs); }
-
 	virtual std::type_index getType()
 	{
 		return std::type_index(typeid(T));
@@ -113,10 +98,52 @@ public:
 
 	virtual size_t getDenseSize() { return m_dense.size(); }
 
+	//Assumes the entityID IS in the vector
+	virtual uint32_t getDenseIndex(uint32_t entityID) override { return m_sparse[entityID]; }
+	virtual uint32_t getSparseIndex(uint32_t denseIndex) override { return m_dense[denseIndex]; }
+
 	//Needs privileged access to mutate dense, sparse, data
 	template <typename ...Args>
 	friend class Group;
 
+	friend class Observer;
+
+private:
+	//Helpers
+	virtual std::vector<uint32_t>& getDenseMutable() override { return m_dense; }
+	virtual std::vector<uint32_t>& getSparseMutable() override { return m_sparse; }
+	virtual const std::vector<uint32_t>& getSparse() override { return m_sparse; }
+	std::vector<T>& getMutableData() { return m_data; }
+
+	virtual void swapData(uint32_t index1, uint32_t index2) override
+	{
+		std::swap(m_data[index1], m_data[index2]);
+	}
+
+	void addObserverOnAdd(ObserverBase* obs) { m_observersOnAdd.emplace_back(obs); }
+	void addObserverOnRemove(ObserverBase* obs) { m_observersOnRemove.emplace_back(obs); }
+
+	void remove_observerOnAdd(ObserverBase* obs) 
+	{
+		auto it = std::find(m_observersOnAdd.begin(), m_observersOnAdd.end(), obs);
+		assert(it != m_observersOnAdd.end() && "Supplied observerBase* that is not in m_observersOnAdd");
+
+		if (*it != m_observersOnAdd.back())
+			std::swap(*it, m_observersOnAdd.back());
+		
+		m_observersOnAdd.pop_back();
+	}
+
+	void remove_observerOnRemove(ObserverBase* obs)
+	{
+		auto it = std::find(m_observersOnRemove.begin(), m_observersOnRemove.end(), obs);
+		assert(it != m_observersOnRemove.end() && "Supplied observerBase* that is not in m_observersOnAdd");
+
+		if (*it != m_observersOnRemove.back())
+			std::swap(*it, m_observersOnRemove.back());
+
+		m_observersOnRemove.pop_back();
+	}
 };
 
 
@@ -130,13 +157,6 @@ private:
 	std::vector<uint32_t> m_dense;
 	std::vector<ObserverBase*> m_observersOnAdd;
 	std::vector<ObserverBase*> m_observersOnRemove;
-
-	//Helpers
-	virtual std::vector<uint32_t>& getDenseMutable() override { return m_dense; }
-	virtual std::vector<uint32_t>& getSparseMutable() override { return m_sparse; }
-	virtual const std::vector<uint32_t>& getSparse() override { return m_sparse; }
-
-	virtual void swapData(uint32_t index1, uint32_t index2) override { ; } //no op
 
 public:
 
@@ -179,6 +199,8 @@ public:
 		
 		m_sparse[change_val] = dense_index;
 		m_sparse[entityID] = UINT32_MAX;
+	
+		return true;
 	}
 
 	virtual bool has(uint32_t entityID) override
@@ -196,9 +218,6 @@ public:
 
 	virtual const std::vector<uint32_t>& getDense() override { return m_dense; }
 
-	void addObserverOnAdd(ObserverBase* obs) { m_observersOnAdd.emplace_back(obs); }
-	void addObserverOnRemove(ObserverBase* obs) { m_observersOnRemove.emplace_back(obs); }
-
 	virtual std::type_index getType()
 	{
 		return std::type_index(typeid(T));
@@ -211,4 +230,43 @@ public:
 	//Needs privileged access to mutate dense, sparse
 	template <typename ...Args>
 	friend class Group;
+
+	friend class Observer;
+
+private:
+	
+	//Helpers
+	virtual std::vector<uint32_t>& getDenseMutable() override { return m_dense; }
+	virtual std::vector<uint32_t>& getSparseMutable() override { return m_sparse; }
+	virtual const std::vector<uint32_t>& getSparse() override { return m_sparse; }
+
+	virtual void swapData(uint32_t index1, uint32_t index2) override { ; } //no op
+
+	virtual uint32_t getDenseIndex(uint32_t entityID) override { return m_sparse[entityID]; }
+	virtual uint32_t getSparseIndex(uint32_t denseIndex) override { return m_dense[denseIndex]; }
+
+	void addObserverOnAdd(ObserverBase* obs) { m_observersOnAdd.emplace_back(obs); }
+	void addObserverOnRemove(ObserverBase* obs) { m_observersOnRemove.emplace_back(obs); }
+
+	void remove_observerOnAdd(ObserverBase* obs)
+	{
+		auto it = std::find(m_observersOnAdd.begin(), m_observersOnAdd.end(), obs);
+		assert(it != m_observersOnAdd.end() && "Supplied observerBase* that is not in m_observersOnAdd");
+
+		if (*it != m_observersOnAdd.back())
+			std::swap(*it, m_observersOnAdd.back());
+
+		m_observersOnAdd.pop_back();
+	}
+
+	void remove_observerOnRemove(ObserverBase* obs)
+	{
+		auto it = std::find(m_observersOnRemove.begin(), m_observersOnRemove.end(), obs);
+		assert(it != m_observersOnRemove.end() && "Supplied observerBase* that is not in m_observersOnAdd");
+
+		if (*it != m_observersOnRemove.back())
+			std::swap(*it, m_observersOnRemove.back());
+
+		m_observersOnRemove.pop_back();
+	}
 };

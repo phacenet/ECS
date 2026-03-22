@@ -1,16 +1,17 @@
 #pragma once
 
 #include "ObserverBase.h"
-#include "World.h"
+#include "Group.h"
 
+template <typename ...Args>
 class GroupObserver : public ObserverBase
 {
 private:
-	World* m_world_ptr = nullptr;
+	Group<Args...>* m_group_ptr;
 
 public:
 	/* Ctor */
-	GroupObserver(World& world);
+	GroupObserver(Group<Args...>& group);
 
 	template <typename T>
 	void observeAdd();
@@ -21,14 +22,10 @@ public:
 	template <typename T>
 	void each(T&& lambda);
 
-	size_t size();
-
 	virtual void clear();
 	virtual void notifyAdd(uint32_t entityID) override;
 	virtual void notifyRemove(uint32_t entityID) override;
 
-
-
 };
 
-#include "Observer.ipp"
+#include "GroupObserver.ipp"

@@ -9,6 +9,7 @@
 #include "Handler.h"
 #include "Dispatcher.h"
 #include "Group.h"
+#include "GroupObserver.h"
 
 
 void printStart(const char* section)
@@ -337,4 +338,5 @@ int main()
 	/* Groups */
 
 	Group<Health, Stamina> group(world);
+	GroupObserver<Health, Stamina> groupObserver(group);
 }

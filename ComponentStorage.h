@@ -17,6 +17,8 @@ public:
 	virtual std::vector<uint32_t>& getSparseMutable() = 0;
 
 	virtual void swapData(uint32_t index1, uint32_t index2) = 0;
+	virtual uint32_t getDenseIndex(uint32_t entityID) = 0;
+	virtual uint32_t getSparseIndex(uint32_t denseIndex) = 0;
 
 	virtual std::type_index getType() = 0;
 	virtual size_t getDenseSize() = 0;

@@ -12,8 +12,7 @@ private:
 
 /* Ctor */
 Observer::Observer(World& world)
-	: m_world_ptr(&world) {
-}
+	: m_world_ptr(&world) {}
 
 /* Add "add" observer to corresponding SparseSet<T>'s m_observersOnAdd */
 template <typename T>
@@ -70,4 +69,13 @@ void Observer::each(T&& func)
 size_t Observer::size()
 {
 	return m_matchingEntities.size();
+}
+
+template <typename T>
+bool Observer::unregister()
+{
+	ComponentStorage* cs = m_world_ptr->getStorage<T>();
+	SparseSet<T>* ss = static_cast<SparseSet<T>*>(cs);
+
+	
 }

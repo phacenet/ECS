@@ -33,9 +33,10 @@ public:
 	virtual void clear();
 	virtual void notifyAdd(uint32_t entityID) override;
 	virtual void notifyRemove(uint32_t entityID) override;
+
+	template <typename T>
+	bool unregister();
 	
-
-
 };
 
 #include "Observer.ipp"
