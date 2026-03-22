@@ -64,8 +64,6 @@ void View<Args...>::each(T&& lambda)
 		*/
 		bool all_have = (std::get<SparseSet<Args>*>(m_storage)->has(entityID) && ...);
 
-
-
 		if constexpr (std::is_invocable_v<T, uint32_t, Args&...>)
 		{
 			if (all_have)

@@ -8,6 +8,7 @@
 #include "Signal.h"
 #include "Handler.h"
 #include "Dispatcher.h"
+#include "Group.h"
 
 
 void printStart(const char* section)
@@ -332,4 +333,8 @@ int main()
 
 	printEnd();
 	/* ========================================================= */
+
+	/* Groups */
+
+	Group<Health, Stamina> group(world);
 }

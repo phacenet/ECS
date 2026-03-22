@@ -15,6 +15,18 @@ private:
 	std::vector<ObserverBase*> m_observersOnAdd;
 	std::vector<ObserverBase*> m_observersOnRemove;
 
+	//Helpers
+	virtual std::vector<uint32_t>& getDenseMutable() override { return m_dense; }
+	virtual std::vector<uint32_t>& getSparseMutable() override { return m_sparse; }
+	virtual const std::vector<uint32_t>& getSparse() override { return m_sparse; }
+	std::vector<T>& getMutableData() { return m_data; }
+
+	virtual void swapData(uint32_t index1, uint32_t index2) override
+	{
+		std::swap(m_data[index1], m_data[index2]);
+	}
+
+
 public:
 	
 	template <typename U>
@@ -89,7 +101,7 @@ public:
 
 	std::vector<T>& iterate() { return m_data; }
 
-	const std::vector<uint32_t>& getDense() { return m_dense; }
+	virtual const std::vector<uint32_t>& getDense() override { return m_dense; }
 
 	void addObserverOnAdd(ObserverBase* obs) { m_observersOnAdd.emplace_back(obs); }
 	void addObserverOnRemove(ObserverBase* obs) { m_observersOnRemove.emplace_back(obs); }
@@ -100,6 +112,10 @@ public:
 	}
 
 	virtual size_t getDenseSize() { return m_dense.size(); }
+
+	//Needs privileged access to mutate dense, sparse, data
+	template <typename ...Args>
+	friend class Group;
 
 };
 
@@ -114,6 +130,13 @@ private:
 	std::vector<uint32_t> m_dense;
 	std::vector<ObserverBase*> m_observersOnAdd;
 	std::vector<ObserverBase*> m_observersOnRemove;
+
+	//Helpers
+	virtual std::vector<uint32_t>& getDenseMutable() override { return m_dense; }
+	virtual std::vector<uint32_t>& getSparseMutable() override { return m_sparse; }
+	virtual const std::vector<uint32_t>& getSparse() override { return m_sparse; }
+
+	virtual void swapData(uint32_t index1, uint32_t index2) override { ; } //no op
 
 public:
 
@@ -171,7 +194,7 @@ public:
 		return false;
 	}
 
-	const std::vector<uint32_t>& getDense() { return m_dense; }
+	virtual const std::vector<uint32_t>& getDense() override { return m_dense; }
 
 	void addObserverOnAdd(ObserverBase* obs) { m_observersOnAdd.emplace_back(obs); }
 	void addObserverOnRemove(ObserverBase* obs) { m_observersOnRemove.emplace_back(obs); }
@@ -185,4 +208,7 @@ public:
 
 	virtual size_t getDenseSize() { return m_dense.size(); }
 
+	//Needs privileged access to mutate dense, sparse
+	template <typename ...Args>
+	friend class Group;
 };
