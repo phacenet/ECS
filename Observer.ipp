@@ -6,6 +6,7 @@ class Observer : public ObserverBase
 private:
 	World* m_world_ptr = nullptr;
 	std::vector<uint32_t> m_matchingEntities;
+	std::vector<ComponentStorage*> m_monitoredComponents;
 
 	public:
 */
@@ -19,11 +20,12 @@ template <typename T>
 void Observer::observeAdd()
 {
 	ComponentStorage* cs = m_world_ptr->getStorage<T>();
-	SparseSet<T>* ss = static_cast<SparseSet<T>*>(cs);
 
 	/* Add ObserverBase object to SparseSet's container */
-	ss->addObserverOnAdd(this); //addObserverOnAdd takes a ptr, so use this, not *this.
+	cs->addObserverOnAdd(this); //addObserverOnAdd takes a ptr, so use this, not *this.
 								//also implicit upcast to ObserverBase
+
+	checkIfMonitored(cs);
 }
 
 /* Add "remove" observer to corresponding SparseSet<T>'s m_observersOnRemove */
@@ -31,11 +33,12 @@ template <typename T>
 void Observer::observeRemove()
 {
 	ComponentStorage* cs = m_world_ptr->getStorage<T>();
-	SparseSet<T>* ss = static_cast<SparseSet<T>*>(cs);
 
 	/* Add ObserverBase object to SparseSet's container */
-	ss->addObserverOnRemove(this);  //addObserverOnAdd takes a ptr, so use this, not *this.
+	cs->addObserverOnRemove(this);  //addObserverOnAdd takes a ptr, so use this, not *this.
 									//also implicit upcast to ObserverBase
+
+	checkIfMonitored(cs);
 }
 
 /* Method to push entityID into m_matchingEntities */
@@ -72,10 +75,39 @@ size_t Observer::size()
 }
 
 template <typename T>
-bool Observer::unregister()
+void Observer::unregister(ObserverType type) //no default arg in implementation allowed, only in declaration
 {
 	ComponentStorage* cs = m_world_ptr->getStorage<T>();
-	SparseSet<T>* ss = static_cast<SparseSet<T>*>(cs);
 
-	
+	if (type == ObserverType::ONADD)
+		cs->remove_observerOnAdd(this);
+
+	else if (type == ObserverType::ONREMOVE)
+		cs->remove_observerOnRemove(this);
+
+	else if (ObserverType::BOTH)
+	{
+		//bypasses safety check performed in remove_observerBoth
+		cs->remove_observerOnAdd(this);
+		cs->remove_observerOnRemove(this);
+	}
+
+	else //SAFE
+		cs->remove_observerBoth(this);
+
+}
+
+//SAFE
+void Observer::unregisterAll()
+{
+	for (auto& cs : m_monitoredComponents)
+		cs->remove_observerBoth(this);
+}
+
+//Private
+//Helper for repeated check
+void Observer::checkIfMonitored(ComponentStorage* cs)
+{
+	if (std::find(m_monitoredComponents.begin(), m_monitoredComponents.end(), cs) == m_monitoredComponents.end());
+		m_monitoredComponents.push_back(cs);
 }

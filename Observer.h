@@ -14,6 +14,7 @@ class Observer : public ObserverBase
 private:
 	World* m_world_ptr = nullptr;
 	std::vector<uint32_t> m_matchingEntities;
+	std::vector<ComponentStorage*> m_monitoredComponents;
 
 public:
 	/* Ctor */
@@ -34,9 +35,22 @@ public:
 	virtual void notifyAdd(uint32_t entityID) override;
 	virtual void notifyRemove(uint32_t entityID) override;
 
+
+	enum class ObserverType : uint8_t { ONADD, ONREMOVE, BOTH, SAFE };
 	template <typename T>
-	bool unregister();
+	void unregister(ObserverType type = ObserverType::SAFE);
+
+	void unregisterAll();
+
+	~Observer()
+	{
+		unregisterAll();
+	}
 	
+private:
+	//Helper for repeated check
+	void checkIfMonitored(ComponentStorage* cs);
+
 };
 
 #include "Observer.ipp"

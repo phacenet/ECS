@@ -120,10 +120,10 @@ private:
 		std::swap(m_data[index1], m_data[index2]);
 	}
 
-	void addObserverOnAdd(ObserverBase* obs) { m_observersOnAdd.emplace_back(obs); }
-	void addObserverOnRemove(ObserverBase* obs) { m_observersOnRemove.emplace_back(obs); }
+	virtual void addObserverOnAdd(ObserverBase* obs) override { m_observersOnAdd.emplace_back(obs); }
+	virtual void addObserverOnRemove(ObserverBase* obs) override { m_observersOnRemove.emplace_back(obs); }
 
-	void remove_observerOnAdd(ObserverBase* obs) 
+	virtual void remove_observerOnAdd(ObserverBase* obs) override
 	{
 		auto it = std::find(m_observersOnAdd.begin(), m_observersOnAdd.end(), obs);
 		assert(it != m_observersOnAdd.end() && "Supplied observerBase* that is not in m_observersOnAdd");
@@ -134,7 +134,7 @@ private:
 		m_observersOnAdd.pop_back();
 	}
 
-	void remove_observerOnRemove(ObserverBase* obs)
+	virtual void remove_observerOnRemove(ObserverBase* obs) override
 	{
 		auto it = std::find(m_observersOnRemove.begin(), m_observersOnRemove.end(), obs);
 		assert(it != m_observersOnRemove.end() && "Supplied observerBase* that is not in m_observersOnAdd");
@@ -144,6 +144,29 @@ private:
 
 		m_observersOnRemove.pop_back();
 	}
+
+	virtual void remove_observerBoth(ObserverBase* obs) override
+	{
+		auto itA = std::find(m_observersOnAdd.begin(), m_observersOnAdd.end(), obs);
+		auto itR = std::find(m_observersOnRemove.begin(), m_observersOnRemove.end(), obs);
+
+		if (itA != m_observersOnAdd.end())
+		{
+			if (*itA != m_observersOnAdd.back())
+				std::swap(*itA, m_observersOnAdd.back());
+
+			m_observersOnAdd.pop_back();
+		}
+
+		if (itR != m_observersOnRemove.end())
+		{
+			if (*itR != m_observersOnRemove.back())
+				std::swap(*itR, m_observersOnRemove.back());
+
+			m_observersOnRemove.pop_back();
+		}
+	}
+
 };
 
 
@@ -245,10 +268,10 @@ private:
 	virtual uint32_t getDenseIndex(uint32_t entityID) override { return m_sparse[entityID]; }
 	virtual uint32_t getSparseIndex(uint32_t denseIndex) override { return m_dense[denseIndex]; }
 
-	void addObserverOnAdd(ObserverBase* obs) { m_observersOnAdd.emplace_back(obs); }
-	void addObserverOnRemove(ObserverBase* obs) { m_observersOnRemove.emplace_back(obs); }
+	virtual void addObserverOnAdd(ObserverBase* obs) override { m_observersOnAdd.emplace_back(obs); }
+	virtual void addObserverOnRemove(ObserverBase* obs) override { m_observersOnRemove.emplace_back(obs); }
 
-	void remove_observerOnAdd(ObserverBase* obs)
+	virtual void remove_observerOnAdd(ObserverBase* obs) override
 	{
 		auto it = std::find(m_observersOnAdd.begin(), m_observersOnAdd.end(), obs);
 		assert(it != m_observersOnAdd.end() && "Supplied observerBase* that is not in m_observersOnAdd");
@@ -259,7 +282,7 @@ private:
 		m_observersOnAdd.pop_back();
 	}
 
-	void remove_observerOnRemove(ObserverBase* obs)
+	virtual void remove_observerOnRemove(ObserverBase* obs) override
 	{
 		auto it = std::find(m_observersOnRemove.begin(), m_observersOnRemove.end(), obs);
 		assert(it != m_observersOnRemove.end() && "Supplied observerBase* that is not in m_observersOnAdd");
@@ -268,5 +291,28 @@ private:
 			std::swap(*it, m_observersOnRemove.back());
 
 		m_observersOnRemove.pop_back();
+	}
+
+	//Only one that performs safety checks for std::find
+	virtual void remove_observerBoth(ObserverBase* obs) override
+	{
+		auto itA = std::find(m_observersOnAdd.begin(), m_observersOnAdd.end(), obs);
+		auto itR = std::find(m_observersOnRemove.begin(), m_observersOnRemove.end(), obs);
+
+		if (itA != m_observersOnAdd.end())
+		{
+			if (*itA != m_observersOnAdd.back())
+				std::swap(*itA, m_observersOnAdd.back());
+
+			m_observersOnAdd.pop_back();
+		}
+
+		if (itR != m_observersOnRemove.end())
+		{
+			if (*itR != m_observersOnRemove.back())
+				std::swap(*itR, m_observersOnRemove.back());
+
+			m_observersOnRemove.pop_back();
+		}
 	}
 };

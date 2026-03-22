@@ -8,6 +8,7 @@ class GroupObserver : public ObserverBase
 {
 private:
 	Group<Args...>* m_group_ptr;
+	std::vector<ComponentStorage*> m_monitoredComponents;
 
 public:
 	/* Ctor */
@@ -22,9 +23,24 @@ public:
 	template <typename T>
 	void each(T&& lambda);
 
+	enum class ObserverType : uint8_t { ONADD, ONREMOVE, BOTH, SAFE };
+	template <typename T>
+	void unregister(ObserverType type = ObserverType::BOTH);
+
+	void unregisterAll();
+
 	virtual void clear();
 	virtual void notifyAdd(uint32_t entityID) override;
 	virtual void notifyRemove(uint32_t entityID) override;
+
+	~GroupObserver()
+	{
+		unregisterAll();
+	}
+
+private:
+	//Helper for repeated check
+	void checkIfMonitored(ComponentStorage* cs);
 
 };
 
