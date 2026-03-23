@@ -108,6 +108,6 @@ void Observer::unregisterAll()
 //Helper for repeated check
 void Observer::checkIfMonitored(ComponentStorage* cs)
 {
-	if (std::find(m_monitoredComponents.begin(), m_monitoredComponents.end(), cs) == m_monitoredComponents.end());
+	if (std::find(m_monitoredComponents.begin(), m_monitoredComponents.end(), cs) == m_monitoredComponents.end())
 		m_monitoredComponents.push_back(cs);
 }
