@@ -94,6 +94,21 @@ void deleteEntity(const deleteEntityEvent& de)
 /* ========================================================= */
 
 
+/* Group types */
+/* ========================================================= */
+struct Velocity
+{
+	double x = 10.0;
+};
+
+struct Position
+{
+	double x = 10.0;
+};
+/* ========================================================= */
+
+
+
 int main()
 {
 	/* General Initialization */
@@ -113,6 +128,8 @@ int main()
 	world.registerComponent<Health>();
 	world.registerComponent<Stamina>();
 	world.registerComponent<PlayerTag>();
+	world.registerComponent<Position>();
+	world.registerComponent<Velocity>();
 	/* ========================================================= */
 
 
@@ -166,9 +183,14 @@ int main()
 		{
 			std::cout << "Entity" << entityID << " lost its Health parameter\n";
 		});
+
+	std::cout << "\n";
 	DebugFunctions::Access::view_SparseSet_Observers<Health>(world, Observer::ObserverType::BOTH);
 	
 	obs->unregister<Health>(Observer::ObserverType::ONADD);
+	DebugFunctions::Access::view_SparseSet_Observers<Health>(world, Observer::ObserverType::BOTH);
+
+	obs->unregisterAll();
 	DebugFunctions::Access::view_SparseSet_Observers<Health>(world, Observer::ObserverType::BOTH);
 
 
@@ -340,8 +362,48 @@ int main()
 	printEnd();
 	/* ========================================================= */
 
-	/* Groups */
 
-	Group<Health, Stamina> group(world);
-	GroupObserver<Health, Stamina> groupObserver(group);
+	/* ========================================================= */
+	/* Groups 
+		* Group stores each of the SparseSet<Args>*... inside of a tuple
+		* Differs from View by sorting the SparseSets dense, sparse, and data
+		*	so the first len elements are the union between all of them.
+		* IE [0,3,5,1,2,4] and elements 0,1,2 qualify for the group:
+		*   [0,1,2,3,5,4] becomes the dense for ALL sparse
+		* Also need to adjust the data and sparse sets to match the new dense
+		* Modifies the actual SparseSet, no copy made
+		* This makes it more efficient because IDs are all in contiguous memory
+		* Groups also utilize a GroupObserver rather than a regular Observer for efficiency
+		* A Component can only be registered to one Group at a time - a Component is released when the Group is destroyed
+*/
+	world.createEntities(2);
+	world.addComponents<Position, Velocity>({ entity0, entity1, entity2 });
+	DebugFunctions::Access::view_all_IDs(world);
+
+	/* Group releases ownership when it is destroyed */
+	{
+		auto group = Group<Position, Velocity>(world); //Group<Health, Stamina> group(world);]
+	}
+
+	auto group = Group<Position, Velocity>(world); //Group<Health, Stamina> group(world);]
+
+	group.each([](Position& p, Velocity& v)
+		{
+			p.x += v.x;
+		});
+
+	group.each([](uint32_t entityID, Position& p, Velocity& v)
+		{
+			p.x += v.x;
+			std::cout << "entityID: " << entityID << ", p.x: " << p.x << ", v.x: " << v.x << "\n";
+		});
+
+	bool has = group.contains(entity0);
+	auto& pos = group.get<Position>(entity0);
+	auto count = group.size();
+
+	std::cout << "Has: " << std::boolalpha << has << ", Position " << pos.x << ", Count: " << count << "\n";
+
+	/* Ownership overlap throws */
+	auto groupFail = Group<Health, Velocity>(world); //Group<Health, Stamina> group(world);]
 }

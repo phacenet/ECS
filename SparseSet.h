@@ -5,6 +5,7 @@
 #include "TagBase.h"
 #include "ObserverBase.h"
 
+
 template <typename T>
 class SparseSet : public ComponentStorage
 {
@@ -14,6 +15,7 @@ private:
 	std::vector<T> m_data;
 	std::vector<ObserverBase*> m_observersOnAdd;
 	std::vector<ObserverBase*> m_observersOnRemove;
+	bool m_groupOwned = false;
 
 public:
 	

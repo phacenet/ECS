@@ -11,6 +11,7 @@ private:
 
 public:
 	/* Ctor */
+	GroupObserver(); //required for storing a GroupObserver by value in Group
 	GroupObserver(Group<Args...>& group);
 
 	template <typename T>
@@ -18,10 +19,6 @@ public:
 
 	template <typename T>
 	void observeRemove();
-
-	enum class ObserverType : uint8_t { ONADD, ONREMOVE, BOTH, SAFE };
-	template <typename T>
-	void unregister(ObserverType type = ObserverType::BOTH);
 
 	void unregisterAll();
 

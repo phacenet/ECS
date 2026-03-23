@@ -13,10 +13,17 @@ private:
 public:
 */
 
+//Default Ctor
+template <typename ...Args>
+GroupObserver<Args...>::GroupObserver()
+	:m_group_ptr(nullptr) {}
+
+
 //Ctor
 template <typename ...Args>
 GroupObserver<Args...>::GroupObserver(Group<Args...>& group)
 	: m_group_ptr(&group) {}
+
 
 template <typename ...Args>
 template <typename T>
@@ -110,30 +117,6 @@ template <typename ...Args>
 			std::swap(cs->getSparseMutable()[sparse_index], cs->getSparseMutable()[sparse_swap]);
 		}
 	}
-}
-
-template <typename ...Args>
-template <typename T>
-void GroupObserver<Args...>::unregister(ObserverType type) //no default arg in implementation allowed, only in declaration
-{
-	ComponentStorage* cs = m_group_ptr->getUnderlyingSparse<T>();
-
-	if (type == ObserverType::ONADD)
-		cs->remove_observerOnAdd(this);
-
-	else if (type == ObserverType::ONREMOVE)
-		cs->remove_observerOnRemove(this);
-
-	else if (ObserverType::BOTH)
-	{
-		//bypasses safety check performed in remove_observerBoth
-		cs->remove_observerOnAdd(this);
-		cs->remove_observerOnRemove(this);
-	}
-
-	else //SAFE
-		cs->remove_observerBoth(this);
-
 }
 
 template <typename ...Args>
