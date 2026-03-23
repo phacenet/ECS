@@ -12,6 +12,9 @@ namespace DebugFunctions
 }
 
 template <typename ...Args>
+class Group;
+
+template <typename ...Args>
 class View;
 
 class World
@@ -89,6 +92,9 @@ public:
 
 	template <typename ...Args>
 	View<Args...> view();
+
+	template <typename ...Args>
+	Group<Args...> group();
 
 	ComponentStorage* getComponent(size_t pos);
 

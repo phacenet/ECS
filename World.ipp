@@ -206,7 +206,14 @@ View<Args...> World::view()
 	return View<Args...>(*this);
 }
 
+template <typename ...Args>
+Group<Args...> World::group()
+{
+	return Group<Args...>(*this);
+}
+
 ComponentStorage* World::getComponent(size_t pos)
 {
 	return m_components.at(pos);
 }
+

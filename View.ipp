@@ -102,5 +102,3 @@ bool View<Args...>::empty()
 {
 	return (m_smallest_storage->getDenseSize() == 0);
 }
-
-//add more functionality to debug functions and make sure view is working properly, then do groups
