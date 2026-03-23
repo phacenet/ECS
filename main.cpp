@@ -166,6 +166,11 @@ int main()
 		{
 			std::cout << "Entity" << entityID << " lost its Health parameter\n";
 		});
+	DebugFunctions::Access::view_SparseSet_Observers<Health>(world, Observer::ObserverType::BOTH);
+	
+	obs->unregister<Health>(Observer::ObserverType::ONADD);
+	DebugFunctions::Access::view_SparseSet_Observers<Health>(world, Observer::ObserverType::BOTH);
+
 
 	printEnd();
 	/* ========================================================= */

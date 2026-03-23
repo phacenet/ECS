@@ -41,10 +41,10 @@ void Observer::observeRemove()
 	checkIfMonitored(cs);
 }
 
-/* Method to push entityID into m_matchingEntities */
+/* Private: Method to push entityID into m_matchingEntities */
 void Observer::notifyAdd(uint32_t entityID) { m_matchingEntities.push_back(entityID); }
 
-/* Method to remove entityID into m_matchingEntities */
+/* Private: Method to remove entityID into m_matchingEntities */
 void Observer::notifyRemove(uint32_t entityID)
 {
 	auto it = std::find(m_matchingEntities.begin(), m_matchingEntities.end(), entityID);
@@ -85,7 +85,7 @@ void Observer::unregister(ObserverType type) //no default arg in implementation 
 	else if (type == ObserverType::ONREMOVE)
 		cs->remove_observerOnRemove(this);
 
-	else if (ObserverType::BOTH)
+	else if (type == ObserverType::BOTH)
 	{
 		//bypasses safety check performed in remove_observerBoth
 		cs->remove_observerOnAdd(this);

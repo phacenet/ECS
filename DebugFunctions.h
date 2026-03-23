@@ -1,10 +1,14 @@
 #pragma once
 
+#ifdef _DEBUG
+
 #include "Core.h"
 #include "World.h"
 #include "Dispatcher.h"
 #include "Signal.h"
 #include "Sink.h"
+#include "Observer.h"
+#include "SparseSet.h"
 
 namespace DebugFunctions
 {
@@ -91,6 +95,53 @@ namespace DebugFunctions
 			std::cout << "Component \"" << typeid(T).name() << "\" has a dense size of: " << ss->getDenseSize() << "\n";
 		}
 
+		template <typename T>
+		static void view_SparseSet_Observers(const World& world, Observer::ObserverType type = Observer::ObserverType::BOTH)
+		{
+			uint32_t index = getTypeIndex<T>();
+			ComponentStorage* cs = world.m_components.at(index);
+			SparseSet<T>* ss = static_cast<SparseSet<T>*>(cs);
+
+			if (type == Observer::ObserverType::ONADD)
+			{
+				auto& vec = ss->getObserversOnAdd();
+				size_t sz = vec.size();
+
+				if(sz == 1)
+					std::cout << "m_observersOnAdd has " << sz << " observer registered\n";
+				else
+					std::cout << "m_observersOnAdd has " << sz << " observers registered\n";
+			}
+			else if (type == Observer::ObserverType::ONREMOVE)
+			{
+				auto& vec = ss->getObserversOnRemove();
+				size_t sz = vec.size();
+
+				if (sz == 1)
+					std::cout << "m_observersOnRemove has " << sz << " observer registered\n";
+				else
+					std::cout << "m_observersOnRemove has " << sz << " observers registered\n";
+			}
+			else
+			{
+				auto& vecAdd = ss->getObserversOnAdd();
+				size_t szAdd = vecAdd.size();
+
+				if (szAdd == 1)
+					std::cout << "m_observersOnAdd has " << szAdd << " observer registered\n";
+				else
+					std::cout << "m_observersOnAdd has " << szAdd << " observers registered\n";
+
+				auto& vecRemove = ss->getObserversOnRemove();
+				size_t szRemove = vecRemove.size();
+
+				if (szRemove == 1)
+					std::cout << "m_observersOnRemove has " << szRemove << " observer registered\n";
+				else
+					std::cout << "m_observersOnRemove has " << szRemove << " observers registered\n";
+			}
+		}
 	};
 }
 
+#endif

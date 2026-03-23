@@ -32,9 +32,6 @@ public:
 	size_t size();
 
 	virtual void clear();
-	virtual void notifyAdd(uint32_t entityID) override;
-	virtual void notifyRemove(uint32_t entityID) override;
-
 
 	enum class ObserverType : uint8_t { ONADD, ONREMOVE, BOTH, SAFE };
 	template <typename T>
@@ -50,6 +47,8 @@ public:
 private:
 	//Helper for repeated check
 	void checkIfMonitored(ComponentStorage* cs);
+	virtual void notifyAdd(uint32_t entityID) override;
+	virtual void notifyRemove(uint32_t entityID) override;
 
 };
 

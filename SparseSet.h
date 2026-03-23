@@ -102,9 +102,17 @@ public:
 	virtual uint32_t getDenseIndex(uint32_t entityID) override { return m_sparse[entityID]; }
 	virtual uint32_t getSparseIndex(uint32_t denseIndex) override { return m_dense[denseIndex]; }
 
+#ifdef _DEBUG
+	const std::vector<ObserverBase*>& getObserversOnAdd() { return m_observersOnAdd; }
+	const std::vector<ObserverBase*>& getObserversOnRemove() { return m_observersOnRemove; }
+#endif
+
 	//Needs privileged access to mutate dense, sparse, data
 	template <typename ...Args>
 	friend class Group;
+
+	template <typename ...Args>
+	friend class GroupObserver;
 
 	friend class Observer;
 
@@ -250,9 +258,17 @@ public:
 
 	virtual size_t getDenseSize() { return m_dense.size(); }
 
+#ifdef _DEBUG
+	const std::vector<ObserverBase*>& getObserversOnAdd() { return m_observersOnAdd; }
+	const std::vector<ObserverBase*>& getObserversOnRemove() { return m_observersOnRemove; }
+#endif
+
 	//Needs privileged access to mutate dense, sparse
 	template <typename ...Args>
 	friend class Group;
+
+	template <typename ...Args>
+	friend class GroupObserver;
 
 	friend class Observer;
 

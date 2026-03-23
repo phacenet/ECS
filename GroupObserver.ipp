@@ -5,7 +5,6 @@ class GroupObserver : public ObserverBase
 {
 private:
 	Group<Args...>* m_group_ptr;
-	std::vector<ComponentStorage*> m_monitoredComponents;
 
 	* Group has:
 		std::tuple<SparseSet<Args>*...> m_ownedSets;
@@ -19,20 +18,15 @@ template <typename ...Args>
 GroupObserver<Args...>::GroupObserver(Group<Args...>& group)
 	: m_group_ptr(&group) {}
 
-
 template <typename ...Args>
 template <typename T>
 void GroupObserver<Args...>::observeAdd()
 {
 	ComponentStorage* cs = m_group_ptr->getUnderlyingSparse<T>();
-	//SparseSet<T>* ss = static_cast<SparseSet<T>*>(cs);
 
 	/* Add ObserverBase object to SparseSet's container */
 	cs->addObserverOnAdd(this); //addObserverOnAdd takes a ptr, so use this, not *this.
 								//also implicit upcast to ObserverBase
-
-	//If not already in vector, add to it
-	checkIfMonitored(cs);
 }
 
 template <typename ...Args>
@@ -40,22 +34,13 @@ template <typename T>
 void GroupObserver<Args...>::observeRemove()
 {
 	ComponentStorage* cs = m_group_ptr->getUnderlyingSparse<T>();
-	//SparseSet<T>* ss = static_cast<SparseSet<T>*>(cs);
 
 	/* Add ObserverBase object to SparseSet's container */
 	cs->addObserverOnRemove(this); //addObserverOnAdd takes a ptr, so use this, not *this.
 								   //also implicit upcast to ObserverBase
 }
 
-/* Observer and GroupObserver should have all of the required virtual functions and members to be caught up to each other
-	Need to add notifyAdd to GroupObserver and each, other than that its pretty much all done
-
-	NotifyAdd needs to check if all of the ownedSets within group_ptr have the new entityID, and if so,
-	it needs to swap the entity ID to the m_len before increment, and then needs to increase m_len and everything else that goes along with it
-
-	Then implement groups fully once groupObservers are done. Destructor for Group potentially for cleanup
-*/
-
+//Private
 template <typename ...Args>
 /*virtual*/ void GroupObserver<Args...>::notifyAdd(uint32_t entityID) //override
 {
@@ -89,8 +74,7 @@ template <typename ...Args>
 	}
 }
 
-//also remove m_monitored components since groupObserver can just reference m_group_ptr -> ownedSets
-
+//Private
 template <typename ...Args>
 /*virtual*/ void GroupObserver<Args...>::notifyRemove(uint32_t entityID) //override
 {
@@ -130,13 +114,6 @@ template <typename ...Args>
 
 template <typename ...Args>
 template <typename T>
-void GroupObserver<Args...>::each(T&& lambda)
-{
-
-}
-
-template <typename ...Args>
-template <typename T>
 void GroupObserver<Args...>::unregister(ObserverType type) //no default arg in implementation allowed, only in declaration
 {
 	ComponentStorage* cs = m_group_ptr->getUnderlyingSparse<T>();
@@ -162,20 +139,9 @@ void GroupObserver<Args...>::unregister(ObserverType type) //no default arg in i
 template <typename ...Args>
 void GroupObserver<Args...>::unregisterAll()
 {
-	for (auto& cs : m_monitoredComponents)
-		cs->remove_observerBoth(this);
+	((std::get<SparseSet<Args>*>(m_group_ptr->m_ownedSets)->remove_observerBoth(this)), ...);
 }
 
 // no op
 template <typename ...Args>
 /*virtual*/ void GroupObserver<Args...>::clear() /*override*/ { ; }
-
-
-//Private
-//Helper for repeated check
-template <typename ...Args>
-void GroupObserver<Args...>::checkIfMonitored(ComponentStorage* cs)
-{
-	if (std::find(m_monitoredComponents.begin(), m_monitoredComponents.end(), cs) == m_monitoredComponents.end());
-		m_monitoredComponents.push_back(cs);
-}
