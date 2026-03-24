@@ -206,10 +206,16 @@ View<Args...> World::view()
 	return View<Args...>(*this);
 }
 
-template <typename ...Args>
-Group<Args...> World::group()
+template <typename ...Owned>
+Group<std::tuple<Owned...>, std::tuple<>> World::group()
 {
-	return Group<Args...>(*this);
+	return Group<std::tuple<Owned...>, std::tuple<>>(*this, get<>);
+}
+
+template <typename ...Owned, typename ...Unowned>
+Group<std::tuple<Owned...>, std::tuple<Unowned...>> World::group(get_t<Unowned...>)
+{
+	return Group<std::tuple<Owned...>, std::tuple<Unowned...>>(*this, get<Unowned...>);
 }
 
 ComponentStorage* World::getComponent(size_t pos)

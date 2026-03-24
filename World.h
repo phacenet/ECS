@@ -4,6 +4,7 @@
 #include "ComponentStorage.h"
 #include "SparseSet.h"
 #include "ComponentIndexing.h"
+#include "get_t.h"
 
 /* Forward Declarations */
 namespace DebugFunctions
@@ -11,8 +12,9 @@ namespace DebugFunctions
 	struct Access;
 }
 
-template <typename ...Args>
+template <typename OwnedTuple, typename UnownedTuple>
 class Group;
+
 
 template <typename ...Args>
 class View;
@@ -93,8 +95,11 @@ public:
 	template <typename ...Args>
 	View<Args...> view();
 
-	template <typename ...Args>
-	Group<Args...> group();
+	template <typename ...Owned>
+	Group<std::tuple<Owned...>, std::tuple<>> group();
+
+	template <typename ...Owned, typename ...Unowned>
+	Group<std::tuple<Owned...>, std::tuple<Unowned...>> group(get_t<Unowned...>);
 
 	ComponentStorage* getComponent(size_t pos);
 

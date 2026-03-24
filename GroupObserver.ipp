@@ -14,20 +14,20 @@ public:
 */
 
 //Default Ctor
-template <typename ...Args>
-GroupObserver<Args...>::GroupObserver()
+template <typename ...Owned, typename ...Unowned>
+GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::GroupObserver()
 	:m_group_ptr(nullptr) {}
 
 
 //Ctor
-template <typename ...Args>
-GroupObserver<Args...>::GroupObserver(Group<Args...>& group)
+template <typename ...Owned, typename ...Unowned>
+GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::GroupObserver(Group<std::tuple<Owned...>, std::tuple<Unowned...>>& group)
 	: m_group_ptr(&group) {}
 
 
-template <typename ...Args>
+template <typename ...Owned, typename ...Unowned>
 template <typename T>
-void GroupObserver<Args...>::observeAdd()
+void GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::observeAdd()
 {
 	ComponentStorage* cs = m_group_ptr->getUnderlyingSparse<T>();
 
@@ -36,9 +36,9 @@ void GroupObserver<Args...>::observeAdd()
 								//also implicit upcast to ObserverBase
 }
 
-template <typename ...Args>
+template <typename ...Owned, typename ...Unowned>
 template <typename T>
-void GroupObserver<Args...>::observeRemove()
+void GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::observeRemove()
 {
 	ComponentStorage* cs = m_group_ptr->getUnderlyingSparse<T>();
 
@@ -47,12 +47,14 @@ void GroupObserver<Args...>::observeRemove()
 								   //also implicit upcast to ObserverBase
 }
 
+
+//NEED TO MAKE SUPPORT OWNEDSET AND UNOWNEDSET
 //Private
-template <typename ...Args>
-/*virtual*/ void GroupObserver<Args...>::notifyAdd(uint32_t entityID) //override
+template <typename ...Owned, typename ...Unowned>
+/*virtual*/ void GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::notifyAdd(uint32_t entityID) //override
 {
 	//Each SparseSet within the Group has the entityID
-	if (((std::get<SparseSet<Args>*>(m_group_ptr->m_ownedSets))->has(entityID) && ...))
+	if (((std::get<SparseSet<Owned>*>(m_group_ptr->m_ownedSets))->has(entityID) && ...))
 	{
 		auto tmp = std::apply([](auto&&... ptrs) {return std::array<ComponentStorage*, sizeof...(ptrs)>{ptrs...}; }, m_group_ptr->m_ownedSets);
 
@@ -81,9 +83,10 @@ template <typename ...Args>
 	}
 }
 
+//NEED TO MAKE SUPPORT OWNEDSET AND UNOWNEDSET
 //Private
-template <typename ...Args>
-/*virtual*/ void GroupObserver<Args...>::notifyRemove(uint32_t entityID) //override
+template <typename ...Owned, typename ...Unowned>
+/*virtual*/ void GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::notifyRemove(uint32_t entityID) //override
 {
 	//overflow guard
 	if (m_group_ptr->m_len <= 1)
@@ -119,12 +122,13 @@ template <typename ...Args>
 	}
 }
 
-template <typename ...Args>
-void GroupObserver<Args...>::unregisterAll()
+//NEED TO MAKE SUPPORT OWNEDSET AND UNOWNEDSET
+template <typename ...Owned, typename ...Unowned>
+void GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::unregisterAll()
 {
-	((std::get<SparseSet<Args>*>(m_group_ptr->m_ownedSets)->remove_observerBoth(this)), ...);
+	((std::get<SparseSet<Owned>*>(m_group_ptr->m_ownedSets)->remove_observerBoth(this)), ...);
 }
 
 // no op
-template <typename ...Args>
-/*virtual*/ void GroupObserver<Args...>::clear() /*override*/ { ; }
+template <typename ...Owned, typename ...Unowned>
+/*virtual*/ void GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::clear() /*override*/ { ; }

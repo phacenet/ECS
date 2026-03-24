@@ -385,7 +385,9 @@ int main()
 		auto group = world.group<Position, Velocity>(); //auto group = Group<Position, Velocity>(world); OR Group<Health, Stamina> group(world);]
 	}
 
-	auto group = world.group<Position, Velocity>();; //Group<Health, Stamina> group(world);]
+	auto group = world.group<Position, Velocity>(get<Health>); //Group<Health, Stamina> group(world);]
+
+	/*
 
 	group.each([](Position& p, Velocity& v)
 		{
@@ -406,4 +408,6 @@ int main()
 
 	/* Ownership overlap throws */
 	//auto groupFail = Group<Health, Velocity>(world); //Group<Health, Stamina> group(world);]
+
+	
 }

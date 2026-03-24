@@ -3,16 +3,22 @@
 #include "ObserverBase.h"
 #include "Group.h"
 
-template <typename ...Args>
-class GroupObserver : public ObserverBase
+
+template <typename OwnedTuple, typename UnownedTuple>
+class GroupObserver;
+
+
+template <typename... Owned, typename ...Unowned>
+class GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>> : public ObserverBase
 {
 private:
-	Group<Args...>* m_group_ptr;
+	Group<std::tuple<Owned...>, std::tuple<Unowned...>>* m_group_ptr;
 
 public:
 	/* Ctor */
 	GroupObserver(); //required for storing a GroupObserver by value in Group
-	GroupObserver(Group<Args...>& group);
+
+	GroupObserver(Group<std::tuple<Owned...>, std::tuple<Unowned...>>& group);
 
 	template <typename T>
 	void observeAdd();

@@ -110,10 +110,10 @@ public:
 #endif
 
 	//Needs privileged access to mutate dense, sparse, data
-	template <typename ...Args>
+	template <typename OwnedTuple, typename UnownedTuple>
 	friend class Group;
 
-	template <typename ...Args>
+	template <typename OwnedTuple, typename UnownedTuple>
 	friend class GroupObserver;
 
 	friend class Observer;
@@ -266,10 +266,10 @@ public:
 #endif
 
 	//Needs privileged access to mutate dense, sparse
-	template <typename ...Args>
+	template <typename OwnedTuple, typename UnownedTuple>
 	friend class Group;
 
-	template <typename ...Args>
+	template <typename OwnedTuple, typename UnownedTuple>
 	friend class GroupObserver;
 
 	friend class Observer;
