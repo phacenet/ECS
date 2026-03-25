@@ -377,7 +377,7 @@ int main()
 		* A Component can only be registered to one Group at a time - a Component is released when the Group is destroyed
 */
 	world.createEntities(2);
-	world.addComponents<Position, Velocity>({ entity0, entity1, entity2 });
+	world.addComponents<Position, Velocity, Health>({ entity0, entity1, entity2 });
 	DebugFunctions::Access::view_all_IDs(world);
 
 	/* Group releases ownership when it is destroyed */
@@ -385,11 +385,11 @@ int main()
 		auto group = world.group<Position, Velocity>(); //auto group = Group<Position, Velocity>(world); OR Group<Health, Stamina> group(world);]
 	}
 
-	auto group = world.group<Position, Velocity>(get<Health>); //Group<Health, Stamina> group(world);]
+	auto group = world.group<Position, Velocity>(get<Health>);
 
-	/*
+	
 
-	group.each([](Position& p, Velocity& v)
+	group.each([](Position& p, Velocity& v, Health& h)
 		{
 			p.x += v.x;
 		});

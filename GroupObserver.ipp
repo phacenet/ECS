@@ -48,7 +48,11 @@ void GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::observeRemove(
 }
 
 
-//NEED TO MAKE SUPPORT OWNEDSET AND UNOWNEDSET
+/*	* Dont need to add  m_unownedSets to notifyAdd or notifyRemove or unregister
+		because I just lazily check the viewed components against the unionIDs,
+		IE if union is [1,4,7], I just check that the viewed components have them as well
+		before operating on them in each */
+
 //Private
 template <typename ...Owned, typename ...Unowned>
 /*virtual*/ void GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::notifyAdd(uint32_t entityID) //override
@@ -83,7 +87,6 @@ template <typename ...Owned, typename ...Unowned>
 	}
 }
 
-//NEED TO MAKE SUPPORT OWNEDSET AND UNOWNEDSET
 //Private
 template <typename ...Owned, typename ...Unowned>
 /*virtual*/ void GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::notifyRemove(uint32_t entityID) //override
@@ -122,7 +125,6 @@ template <typename ...Owned, typename ...Unowned>
 	}
 }
 
-//NEED TO MAKE SUPPORT OWNEDSET AND UNOWNEDSET
 template <typename ...Owned, typename ...Unowned>
 void GroupObserver<std::tuple<Owned...>, std::tuple<Unowned...>>::unregisterAll()
 {
