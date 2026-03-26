@@ -18,3 +18,7 @@ struct has_type;
 template <typename T, typename... Us>
 struct has_type<T, std::tuple<Us...>> : std::disjunction<std::is_same<T, Us>...> {};
 /* ----------------------------------------------------- */
+
+//for else branch of invocable_v
+template <typename>
+inline constexpr bool always_false = false;

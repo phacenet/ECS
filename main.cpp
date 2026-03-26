@@ -10,6 +10,7 @@
 #include "Dispatcher.h"
 #include "Group.h"
 #include "GroupObserver.h"
+#include "ExcludedGroupView.h"
 
 
 void printStart(const char* section)
@@ -387,9 +388,7 @@ int main()
 
 	auto group = world.group<Position, Velocity>(get<Health>);
 
-	
-
-	group.each([](Position& p, Velocity& v, Health& h)
+	group.each([](Position& p, Velocity& v)
 		{
 			p.x += v.x;
 		});
@@ -403,8 +402,36 @@ int main()
 	bool has = group.contains(entity0);
 	auto& pos = group.get<Position>(entity0);
 	auto count = group.size();
+	auto accurateCount = group.size(ComputationType::OWNED_AND_VIEWED);
 
-	std::cout << "Has: " << std::boolalpha << has << ", Position " << pos.x << ", Count: " << count << "\n";
+	std::cout << "Has: " << std::boolalpha << has << ", Position " << pos.x << ", Count: " << count << ", vs: " << accurateCount << "\n";
+
+	auto groupExclusion = group.exclude<Health>();
+
+	groupExclusion.each([](Position& p, Velocity& v)
+		{
+			p.x += v.x;
+		});
+
+	groupExclusion.each([](uint32_t entityID)
+		{
+			std::cout << entityID << ", ";
+		});
+	std::cout << "\n";
+
+	groupExclusion.each([](uint32_t entityID, Position& p, Velocity& v)
+		{
+			p.x += v.x;
+			std::cout << "entityID: " << entityID << ", p.x: " << p.x << ", v.x: " << v.x << "\n";
+		});
+
+	bool hasE = groupExclusion.contains(entity0);
+	auto& ent0Vel = groupExclusion.get<Velocity>(entity0);
+	auto geCount = groupExclusion.size();
+	bool gEempty = groupExclusion.empty();
+	auto geAccCount = groupExclusion.size(ComputationType::OWNED_AND_VIEWED);
+
+	std::cout << "Has: " << std::boolalpha << hasE << ", is empty? " << gEempty << ", Velocity " << ent0Vel.x << ", Count: " << geCount << ", vs: " << geAccCount << "\n";
 
 	/* Ownership overlap throws */
 	//auto groupFail = Group<Health, Velocity>(world); //Group<Health, Stamina> group(world);]
