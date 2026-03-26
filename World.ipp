@@ -223,3 +223,48 @@ ComponentStorage* World::getComponent(size_t pos)
 	return m_components.at(pos);
 }
 
+template <typename T>
+void World::visit(uint32_t entityID, T&& callback)
+{
+	for (ComponentStorage* cs : m_components)
+	{
+		if (cs->has(entityID))
+		{
+			if constexpr (std::is_invocable_v<T, std::type_index>)
+			{
+				std::type_index type = cs->getType();
+				callback(type);
+			}
+
+			else if constexpr (std::is_invocable_v < T, uint32_t>)
+				callback(entityID);
+
+			else
+				static_assert(always_false<T>, "Unsupported callable signature");
+		}
+	}
+}
+
+template <typename T>
+void World::visit(T&& callback)
+{
+	for (ComponentStorage* cs : m_components)
+	{
+		if constexpr (std::is_invocable_v<T, uint32_t, std::type_index>)
+		{
+			std::type_index type = cs->getType();
+			std::vector<uint32_t> dense_vec = cs->getDense();
+
+			for (uint32_t entityID : dense_vec)
+				callback(entityID, type);
+		}
+
+		else
+			static_assert(always_false<T>, "Unsupported callable signature");
+	}
+}
+
+bool World::isAlive(uint32_t entityID)
+{
+	return m_aliveIDs.contains(entityID);
+}

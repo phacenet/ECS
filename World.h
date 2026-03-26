@@ -103,6 +103,14 @@ public:
 
 	ComponentStorage* getComponent(size_t pos);
 
+	template <typename T>
+	void visit(uint32_t entityID, T&& callback);
+
+	template <typename T>
+	void visit(T&& callback);
+
+	bool isAlive(uint32_t entityID);
+
 	/* Ctor */
 	World() = default;
 

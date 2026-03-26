@@ -11,6 +11,7 @@
 #include "Group.h"
 #include "GroupObserver.h"
 #include "ExcludedGroupView.h"
+#include "CommandBuffer.h"
 
 
 void printStart(const char* section)
@@ -145,7 +146,7 @@ int main()
 
 	/* Observer */
 	/*
-		For monitoring when a Component is added or removed from an entity. 
+		For monitoring when a Component is added or removed from an entity.
 		Internally stores vector of entities that have had the component
 		added or removed since the observer was created.
 
@@ -187,7 +188,7 @@ int main()
 
 	std::cout << "\n";
 	DebugFunctions::Access::view_SparseSet_Observers<Health>(world, Observer::ObserverType::BOTH);
-	
+
 	obs->unregister<Health>(Observer::ObserverType::ONADD);
 	DebugFunctions::Access::view_SparseSet_Observers<Health>(world, Observer::ObserverType::BOTH);
 
@@ -203,30 +204,29 @@ int main()
 	/* ========================================================= */
 	auto viewHealth = world.view<Health>();
 	auto viewStamina = world.view<Stamina>();
+	CommandBuffer cb0(world);
 
 	auto removeHealth = [&](uint32_t entityID)
 		{
 			if (viewHealth.contains(entityID))
-				world.removeComponent<Health>(entityID);
+				cb0.remove<Health>(entityID);
 		};
 
 	auto removeStamina = [&](uint32_t entityID)
 		{
 			if (viewStamina.contains(entityID))
-				world.removeComponent<Stamina>(entityID);
+				cb0.remove<Stamina>(entityID);
 		};
 
-	for (const auto& entity : entities)
-	{
-		viewHealth.each(removeHealth);
-		viewHealth.each(removeStamina);
-	}
+	viewHealth.each(removeHealth);
+	viewStamina.each(removeStamina);
+	cb0.flush();
 	/* ========================================================= */
 
 
-	/* View 
+	/* View
 		* Viewing "groups" of entities that ALL own the specified Components.
-		* Views are for operating on the aforementioned entities or ensuring 
+		* Views are for operating on the aforementioned entities or ensuring
 			entity status is still as expected after changes.
 		* Can also be used to grab all entities that have any component type
 			and quickly remove the Component from all entities.
@@ -276,7 +276,7 @@ int main()
 	//Show how many entities are in the internal Vector of Health and Stamina
 	DebugFunctions::Access::view_sparseSet_dense<Health>(world);
 	DebugFunctions::Access::view_sparseSet_dense<Stamina>(world);
-	
+
 	//View recalculates the smallest Component on every "each" call. O(n) operation for however many Components the view contains
 	std::cout << "Size of the Component in the View with the least entities: " << view.size() << "\n";
 	//Check if View has any entities. Checks if internal smallest_Component's size is 0
@@ -303,7 +303,7 @@ int main()
 
 	/* Connect the function HealthSystem::onDamage on the healthSystem instance */
 	sink.connect<&HealthSystem::onDamage>(&healthSystem);
-	signal.publish(DamageEvent{0, 25.0f});
+	signal.publish(DamageEvent{ 0, 25.0f });
 	sink.disconnect<&HealthSystem::onDamage>(&healthSystem);
 	std::cout << "\n";
 
@@ -323,7 +323,7 @@ int main()
 	/* ========================================================= */
 
 
-	/* Dispatcher 
+	/* Dispatcher
 		* Automatically create and manage signals and sinks
 		* Provides additional functionality for queueing Events
 		* Events are the data to be passed to the registered function
@@ -365,7 +365,7 @@ int main()
 
 
 	/* ========================================================= */
-	/* Groups 
+	/* Groups
 		* Group stores each of the SparseSet<Args>*... inside of a tuple
 		* Differs from View by sorting the SparseSets dense, sparse, and data
 		*	so the first len elements are the union between all of them.
@@ -376,6 +376,8 @@ int main()
 		* This makes it more efficient because IDs are all in contiguous memory
 		* Groups also utilize a GroupObserver rather than a regular Observer for efficiency
 		* A Component can only be registered to one Group at a time - a Component is released when the Group is destroyed
+		* groupExcludedView copies the Unowned tuple and excludes the specified component, then reaches into the parent group
+		*	for owned
 */
 	world.createEntities(2);
 	world.addComponents<Position, Velocity, Health>({ entity0, entity1, entity2 });
@@ -399,12 +401,22 @@ int main()
 			std::cout << "entityID: " << entityID << ", p.x: " << p.x << ", v.x: " << v.x << "\n";
 		});
 
-	bool has = group.contains(entity0);
-	auto& pos = group.get<Position>(entity0);
-	auto count = group.size();
-	auto accurateCount = group.size(ComputationType::OWNED_AND_VIEWED);
+	bool groupHas = group.contains(entity0);
+	auto& groupPos = group.get<Position>(entity0);
+	auto groupCount = group.size();
 
-	std::cout << "Has: " << std::boolalpha << has << ", Position " << pos.x << ", Count: " << count << ", vs: " << accurateCount << "\n";
+	world.removeComponent<Health>(entity2);
+	auto groupAccurateCount = group.size(ComputationType::OWNED_AND_VIEWED);
+
+	std::cout << "Removed Health from entity 2\n";
+	group.each([](uint32_t entityID, Position& p, Velocity& v)
+		{
+			p.x += v.x;
+			std::cout << "entityID: " << entityID << ", p.x: " << p.x << ", v.x: " << v.x << "\n";
+		});
+
+	std::cout << "Group: Has? " << std::boolalpha << groupHas << ", Position " << groupPos.x << ", Count: " << groupCount << ", vs: " << groupAccurateCount << "\n";
+
 
 	auto groupExclusion = group.exclude<Health>();
 
@@ -425,16 +437,89 @@ int main()
 			std::cout << "entityID: " << entityID << ", p.x: " << p.x << ", v.x: " << v.x << "\n";
 		});
 
-	bool hasE = groupExclusion.contains(entity0);
-	auto& ent0Vel = groupExclusion.get<Velocity>(entity0);
-	auto geCount = groupExclusion.size();
-	bool gEempty = groupExclusion.empty();
-	auto geAccCount = groupExclusion.size(ComputationType::OWNED_AND_VIEWED);
+	bool groupE_Has = groupExclusion.contains(entity0);
+	auto& groupE_vel = groupExclusion.get<Velocity>(entity0);
+	auto groupE_count = groupExclusion.size();
+	bool groupE_empty = groupExclusion.empty();
+	auto groupE_accurateCount = groupExclusion.size(ComputationType::OWNED_AND_VIEWED);
 
-	std::cout << "Has: " << std::boolalpha << hasE << ", is empty? " << gEempty << ", Velocity " << ent0Vel.x << ", Count: " << geCount << ", vs: " << geAccCount << "\n";
+	std::cout << "GroupExclusion: Has? " << std::boolalpha << groupE_Has << ", is empty? " << groupE_empty << ", Velocity " << groupE_vel.x << ", Count: " << groupE_count << ", vs: " << groupE_accurateCount << "\n";
 
 	/* Ownership overlap throws */
 	//auto groupFail = Group<Health, Velocity>(world); //Group<Health, Stamina> group(world);]
+	printEnd();
+	/* ========================================================= */
 
+
+	/* Reset entities */
+	/* ========================================================= */
+	auto viewVelocity = world.view<Velocity>();
+	auto removeVelocity = [&](uint32_t entityID)
+		{
+			if (viewVelocity.contains(entityID))
+				cb0.remove<Velocity>(entityID);
+		};
+
+	auto viewPosition = world.view<Position>();
+	auto removePosition = [&](uint32_t entityID)
+		{
+			if (viewPosition.contains(entityID))
+				cb0.remove<Position>(entityID);
+		};
+
+
+	viewHealth.each(removeHealth);
+	viewStamina.each(removeStamina);
+	viewVelocity.each(removeVelocity);
+	viewPosition.each(removePosition);
+
+	cb0.flush();
+	world.visit([](uint32_t entityID, std::type_index type)
+		{
+			std::cout << "entity " << entityID << " has " << type.name() << "\n";
+		});
+	/* ========================================================= */
+
+
+	/* ========================================================= */
+	/*
+		* Command Buffer
+		* Just queues function callbacks for dangerous operations, like deleting an entity, Component, or adding a Component
+	*/
+	printStart("CommandBuffer");
+	world.addComponents<Health, Stamina>({ entity0, entity1 });
+
+	/*world.visit(entity0, [](std::type_index type)
+		{
+			std::cout << type.name() << ", ";
+		});
+	*/
+
+	CommandBuffer cb(world);
+
+	world.visit([](uint32_t entityID, std::type_index type)
+		{
+			std::cout << "entity " << entityID << " has " << type.name() << "\n";
+		});
+
+	auto groupHS = world.group<Health, Stamina>();
+
+	auto [h0, s0] = groupHS.get<Health, Stamina>(entity0); //structured binding
+	h0.health = 0;
+	s0.stamina = 0;
 	
+
+	groupHS.each([&cb, &world](uint32_t entityID, Health& h, Stamina& s)
+		{
+			if (h.health <= 0)
+			{
+				cb.destroy(entityID);
+				assert(world.isAlive(entityID));
+			}
+		});
+
+	cb.flush();
+	std::cout << "Should have destroyed entity0\n";
+	DebugFunctions::Access::view_all_IDs(world);
+
 }
