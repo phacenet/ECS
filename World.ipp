@@ -154,7 +154,7 @@ bool World::addComponents(std::initializer_list<uint32_t> entityIDs, Args&&... a
 template <typename ...Args>
 void World::addComponents(std::initializer_list<uint32_t> entityIDs)
 {
-	for(auto it = entityIDs.begin(); it != entityIDs.end(); ++it)
+	for (auto it = entityIDs.begin(); it != entityIDs.end(); ++it)
 		((addComponent<Args>(*it, Args{})), ...);
 }
 
@@ -271,6 +271,13 @@ void World::serialize(const char* file)
 	s.serialize<Args...>(this, file);
 }
 
+
+template <typename... Args>
+void World::deserialize(const char* file)
+{
+	Serialize s;
+	s.deserialize<Args...>(*this, file);
+}
 
 #ifdef _DEBUG
 bool World::isAlive(uint32_t entityID)

@@ -16,8 +16,6 @@ namespace DebugFunctions
 template <typename OwnedTuple, typename UnownedTuple>
 class Group;
 
-class Serialize;
-
 template <typename ...Args>
 class View;
 
@@ -45,6 +43,9 @@ private:
 	template <typename T>
 	void _lazy_register_()
 	{
+		std::cout << "Type " << typeid(T).name()
+			<< " index = " << getTypeIndex<T>() << "\n";
+
 		if (!_registered_component_<T>())
 			registerComponent<T>();
 	}
@@ -114,6 +115,10 @@ public:
 	template <typename... Args>
 	void serialize(const char* file);
 
+	template <typename... Args>
+	void deserialize(const char* file);
+
+
 	#ifdef _DEBUG
 	bool isAlive(uint32_t entityID);
 	#endif
@@ -147,3 +152,4 @@ public:
 
 #include "World.ipp"
 #include "View.h"
+#include "Serialize.h"

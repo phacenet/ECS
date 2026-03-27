@@ -1,14 +1,17 @@
 #pragma once
 
 #include <fstream>
+#include <iostream>
 
 #include "ComponentIndexing.h"
-#include "World.h"
 
+class World;
 
 class Serialize
 {
 private:
+	template <typename Arg, typename ...Args>
+	void _match_(size_t hash, World& world, std::ifstream& iffile);
 
 public:
 	Serialize() = default;

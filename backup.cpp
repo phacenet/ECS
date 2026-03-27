@@ -1,3 +1,4 @@
+#ifdef _herghbergh_
 
 #include "Core.h"
 
@@ -524,3 +525,4 @@ int main()
 	DebugFunctions::Access::view_all_IDs(world);
 
 }
+#endif

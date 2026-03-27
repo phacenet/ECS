@@ -3,7 +3,9 @@
 #include <cstdint>
 #include <string_view>
 
+
 /* If a free function is inside a header and not templated or in a class/struct, must be marked inline */
+
 inline uint32_t nextIndex()
 {
 	static uint32_t counter = 0;
@@ -16,7 +18,6 @@ uint32_t getTypeIndex()
 	static uint32_t index = nextIndex(); //only ever runs once. static "=" only executes once ever
 	return index;
 }
-
 
 
 // For serialization to match types at compile-time

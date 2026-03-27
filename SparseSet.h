@@ -111,11 +111,11 @@ public:
 		if (outFile.is_open())
 		{
 			// [hash]
-			size_t hash = getHash<T>();
+			constexpr size_t hash = getHash<T>();
 			outFile.write(reinterpret_cast<const char*>(&hash), sizeof(hash));
 
 			// [count of entities] - count is the same for dense and data
-			uint32_t numEntities = m_dense.size();
+			size_t numEntities = m_dense.size();
 			outFile.write(reinterpret_cast<const char*>(&numEntities), sizeof(numEntities));
 
 			// [entities]
@@ -126,11 +126,40 @@ public:
 			for (const auto& data : m_data)
 				outFile.write(reinterpret_cast<const char*>(&data), sizeof(data));
 		}
+
+		outFile.close();
 	}
 
 	virtual void deserialize(std::ifstream& inFile)
 	{
-		
+		if (inFile.is_open())
+		{
+			uint32_t numEntities;
+			inFile.read(reinterpret_cast<char*>(&numEntities), sizeof(numEntities));
+
+			std::vector<uint32_t> dense;
+			dense.reserve(numEntities);
+
+			for (size_t i{ 0 }; i < numEntities; ++i)
+			{
+				uint32_t entityID;
+				inFile.read(reinterpret_cast<char*>(&entityID), sizeof(entityID));
+				dense.push_back(entityID);
+			}
+
+			std::vector<T> dense_data;
+			dense_data.reserve(numEntities);
+
+			for (size_t i{ 0 }; i < numEntities; ++i)
+			{
+				T data;
+				inFile.read(reinterpret_cast<char*>(&data), sizeof(data));
+				dense_data.emplace_back(std::move(data));
+			}
+
+			this->m_dense = dense;
+			this->m_data = dense_data;
+		}
 	}
 
 
@@ -296,7 +325,7 @@ public:
 		if (outFile.is_open())
 		{
 			// [hash]
-			size_t hash = getHash<T>();
+			constexpr size_t hash = getHash<T>();
 			outFile.write(reinterpret_cast<const char*>(&hash), sizeof(hash));
 
 			// [count of entities] - count is the same for dense and data
@@ -309,9 +338,26 @@ public:
 		}
 	}
 
+
 	virtual void deserialize(std::ifstream& inFile)
 	{
+		if (inFile.is_open())
+		{
+			uint32_t numEntities;
+			inFile.read(reinterpret_cast<char*>(&numEntities), sizeof(numEntities));
 
+			std::vector<uint32_t> dense;
+			dense.reserve(numEntities);
+
+			for (size_t i{ 0 }; i < numEntities; ++i)
+			{
+				uint32_t entityID;
+				inFile.read(reinterpret_cast<char*>(&entityID), sizeof(entityID));
+				dense.push_back(entityID);
+			}
+
+			this->m_dense = dense;
+		}
 	}
 
 
