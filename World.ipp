@@ -264,7 +264,17 @@ void World::visit(T&& callback)
 	}
 }
 
+template <typename... Args>
+void World::serialize(const char* file)
+{
+	Serialize s;
+	s.serialize<Args...>(this, file);
+}
+
+
+#ifdef _DEBUG
 bool World::isAlive(uint32_t entityID)
 {
 	return m_aliveIDs.contains(entityID);
 }
+#endif

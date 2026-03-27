@@ -6,6 +6,7 @@
 #include "ComponentIndexing.h"
 #include "get_t.h"
 
+
 /* Forward Declarations */
 namespace DebugFunctions
 {
@@ -15,6 +16,7 @@ namespace DebugFunctions
 template <typename OwnedTuple, typename UnownedTuple>
 class Group;
 
+class Serialize;
 
 template <typename ...Args>
 class View;
@@ -109,7 +111,12 @@ public:
 	template <typename T>
 	void visit(T&& callback);
 
+	template <typename... Args>
+	void serialize(const char* file);
+
+	#ifdef _DEBUG
 	bool isAlive(uint32_t entityID);
+	#endif
 
 	/* Ctor */
 	World() = default;
@@ -133,6 +140,8 @@ public:
 
 	/* Gives DebugFunctions:Access access to private members without polluting class */
 	friend struct DebugFunctions::Access;
+
+	friend class Serialize;
 
 };
 
