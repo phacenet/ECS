@@ -2,6 +2,7 @@
 
 #include <fstream>
 
+#include "ComponentIndexing.h"
 #include "World.h"
 
 

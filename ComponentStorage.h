@@ -1,5 +1,6 @@
 #pragma once
 
+#include <fstream>
 #include <cstdint>
 #include <vector>
 #include <typeindex>
@@ -28,6 +29,9 @@ public:
 	virtual void remove_observerOnAdd(ObserverBase* obs) = 0;
 	virtual void remove_observerOnRemove(ObserverBase* obs) = 0;
 	virtual void remove_observerBoth(ObserverBase* obs) = 0;
+
+	virtual void serialize(std::ofstream& outFile) = 0;
+	virtual void deserialize(std::ifstream& inFile) = 0;
 
 	virtual std::type_index getType() = 0;
 	virtual size_t getDenseSize() = 0;

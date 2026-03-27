@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Core.h"
+#include "fstream"
+
 #include "ComponentStorage.h"
 #include "TagBase.h"
 #include "ObserverBase.h"
@@ -103,6 +105,34 @@ public:
 	//Assumes the entityID IS in the vector
 	virtual uint32_t getDenseIndex(uint32_t entityID) override { return m_sparse[entityID]; }
 	virtual uint32_t getSparseIndex(uint32_t denseIndex) override { return m_dense[denseIndex]; }
+
+	virtual void serialize(std::ofstream& outFile)
+	{
+		if (outFile.is_open())
+		{
+			// [hash]
+			size_t hash = getHash<T>();
+			outFile.write(reinterpret_cast<const char*>(&hash), sizeof(hash));
+
+			// [count of entities] - count is the same for dense and data
+			uint32_t numEntities = m_dense.size();
+			outFile.write(reinterpret_cast<const char*>(&numEntities), sizeof(numEntities));
+
+			// [entities]
+			for (const uint32_t& entityID : m_dense)
+				outFile.write(reinterpret_cast<const char*>(&entityID), sizeof(entityID));
+
+			// [data]
+			for (const auto& data : m_data)
+				outFile.write(reinterpret_cast<const char*>(&data), sizeof(data));
+		}
+	}
+
+	virtual void deserialize(std::ifstream& inFile)
+	{
+		
+	}
+
 
 #ifdef _DEBUG
 	const std::vector<ObserverBase*>& getObserversOnAdd() { return m_observersOnAdd; }
@@ -259,6 +289,32 @@ public:
 	virtual size_t getDataSize() { return 0; }
 
 	virtual size_t getDenseSize() { return m_dense.size(); }
+
+
+	virtual void serialize(std::ofstream& outFile)
+	{
+		if (outFile.is_open())
+		{
+			// [hash]
+			size_t hash = getHash<T>();
+			outFile.write(reinterpret_cast<const char*>(&hash), sizeof(hash));
+
+			// [count of entities] - count is the same for dense and data
+			uint32_t numEntities = m_dense.size();
+			outFile.write(reinterpret_cast<const char*>(&numEntities), sizeof(numEntities));
+
+			// [entities]
+			for (const uint32_t& entityID : m_dense)
+				outFile.write(reinterpret_cast<const char*>(&entityID), sizeof(entityID));
+		}
+	}
+
+	virtual void deserialize(std::ifstream& inFile)
+	{
+
+	}
+
+
 
 #ifdef _DEBUG
 	const std::vector<ObserverBase*>& getObserversOnAdd() { return m_observersOnAdd; }
