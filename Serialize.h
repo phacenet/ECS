@@ -13,6 +13,9 @@ private:
 	template <typename Arg, typename ...Args>
 	void _match_(size_t hash, World& world, std::ifstream& iffile);
 
+	template <typename... Args>
+	void _create_entities_(World& world);
+
 public:
 	Serialize() = default;
 

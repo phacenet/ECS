@@ -268,7 +268,7 @@ template <typename... Args>
 void World::serialize(const char* file)
 {
 	Serialize s;
-	s.serialize<Args...>(this, file);
+	s.serialize<Args...>(*this, file);
 }
 
 

@@ -37,17 +37,34 @@ private:
 	{ 
 		uint32_t index = getTypeIndex<T>();
 		/* Within range and not nullptr means already registered */
+		if (m_components.empty())
+			return false;
+
 		return (index <= (m_components.size() - 1) && m_components[index] != nullptr);
 	}
 
 	template <typename T>
 	void _lazy_register_()
 	{
-		std::cout << "Type " << typeid(T).name()
-			<< " index = " << getTypeIndex<T>() << "\n";
-
 		if (!_registered_component_<T>())
 			registerComponent<T>();
+	}
+
+	void _register_aliveID_()
+	{
+		uint32_t newID;
+
+		/* Use next free entityID */
+		newID = m_nextEntityID++;
+		/* Insert newID into aliveIDs for both cases */
+		m_aliveIDs.insert(newID);
+	}
+
+	void _register_freeID_()
+	{
+		uint32_t newID;
+		newID = m_nextEntityID++;
+		m_freeIDs.push(newID);
 	}
 	/* ============================================================ */
 public:

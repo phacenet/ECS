@@ -126,8 +126,6 @@ public:
 			for (const auto& data : m_data)
 				outFile.write(reinterpret_cast<const char*>(&data), sizeof(data));
 		}
-
-		outFile.close();
 	}
 
 	virtual void deserialize(std::ifstream& inFile)
