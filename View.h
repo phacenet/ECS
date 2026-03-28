@@ -1,8 +1,10 @@
 #pragma once
 
 #include "Core.h"
+#include "get_t.h"
 
 class World;
+class TagBase;
 
 template <typename ...Args>
 class View

@@ -117,10 +117,10 @@ public:
 	void visit(T&& callback);
 
 	template <typename... Args>
-	void serialize(const char* file);
+	void serialize(const char* file = "world_save.bin");
 
 	template <typename... Args>
-	void deserialize(const char* file);
+	void deserialize(const char* file = "world_save.bin");
 
 
 	#ifdef _DEBUG
@@ -141,8 +141,8 @@ public:
 
 	World(const World& other) = delete;
 	World operator=(const World& other) = delete;
-	World(World&& other) = delete; //disabled for now
-	World& operator=(World&& other) = delete; //disabled for now
+	World(World&& other) = delete;
+	World& operator=(World&& other) = delete;
 	
 	/* Prevent incorrect user call */
 	std::vector<uint32_t> getEntitiesWith() = delete;

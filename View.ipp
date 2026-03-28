@@ -56,28 +56,37 @@ void View<Args...>::each(T&& lambda)
 	_recalc_();
 	for (uint32_t entityID : m_smallest_storage->getDense())
 	{
-		/*
-			* MUST evaluate entire fold first or a nasty bug where get is called on an OOB index can occur
-			Compiler can evaluate RHS of && even if left side is false, because order is unspecified
-			* Also recalc m_smallest_storage to reflect changes since view was captured. Entity could
-				have gained or lost Components since inception
-		*/
 		bool all_have = (std::get<SparseSet<Args>*>(m_storage)->has(entityID) && ...);
 
-		if constexpr (std::is_invocable_v<T, uint32_t, Args&...>)
+		auto filterLambda = [this, entityID]<typename Arg>() ->decltype(auto)
 		{
-			if (all_have)
-				lambda(entityID, (std::get<SparseSet<Args>*>(m_storage)->get(entityID))...);
-		}
-		else if constexpr (std::is_invocable_v<T, uint32_t>)
+			if constexpr (std::is_base_of_v<TagBase, Arg>)
+				return std::tuple<>{};
+			else
+				return std::forward_as_tuple(std::get<SparseSet<Arg>*>(m_storage)->get(entityID));
+		};
+		auto result = std::tuple_cat(filterLambda.template operator()<Args>()...);
+
+		using filtered_tuple = typename Filter < is_not_tag, std::tuple<Args...>>::type;
+
+		if (all_have)
 		{
-			if(all_have)
+			if constexpr (is_invocable_with_tuple_and_id<T, uint32_t, filtered_tuple>::value)
+			{
+				std::apply([&](auto&... args) {lambda(entityID, args...); }, result);
+				//lambda(entityID, (std::get<SparseSet<Args>*>(m_storage)->get(entityID))...);
+			}
+
+			else if constexpr (is_invocable_with_tuple<T, filtered_tuple>::value)
+			{
+				std::apply([&](auto&... args) {lambda(args...); }, result);
+			}
+
+			else if constexpr (is_invocable_with_id<T>::value)
 				lambda(entityID);
-		}
-		else
-		{
-			if (all_have)
-				lambda((std::get<SparseSet<Args>*>(m_storage)->get(entityID))...);
+
+			else
+				static_assert(always_false<T>, "Unsupported callable signature");
 		}
 	}
 }
@@ -102,3 +111,4 @@ bool View<Args...>::empty()
 {
 	return (m_smallest_storage->getDenseSize() == 0);
 }
+

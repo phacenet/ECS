@@ -269,6 +269,13 @@ public:
 		return true;
 	}
 
+	//cross compatability
+	template <typename U>
+	bool insert(uint32_t entityID, U&& data_value)
+	{
+		return this->insert(entityID);
+	}
+
 	virtual bool remove(uint32_t entityID) override
 	{
 		if (!has(entityID))

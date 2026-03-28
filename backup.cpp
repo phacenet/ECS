@@ -1,5 +1,6 @@
 #ifdef _herghbergh_
 
+
 #include "Core.h"
 
 #include "World.h"
@@ -366,7 +367,6 @@ int main()
 	/* ========================================================= */
 
 
-	/* ========================================================= */
 	/* Groups
 		* Group stores each of the SparseSet<Args>*... inside of a tuple
 		* Differs from View by sorting the SparseSets dense, sparse, and data
@@ -381,6 +381,8 @@ int main()
 		* groupExcludedView copies the Unowned tuple and excludes the specified component, then reaches into the parent group
 		*	for owned
 */
+/* ========================================================= */
+	printStart("Groups");
 	world.createEntities(2);
 	world.addComponents<Position, Velocity, Health>({ entity0, entity1, entity2 });
 	DebugFunctions::Access::view_all_IDs(world);
@@ -491,12 +493,6 @@ int main()
 	printStart("CommandBuffer");
 	world.addComponents<Health, Stamina>({ entity0, entity1 });
 
-	/*world.visit(entity0, [](std::type_index type)
-		{
-			std::cout << type.name() << ", ";
-		});
-	*/
-
 	CommandBuffer cb(world);
 
 	world.visit([](uint32_t entityID, std::type_index type)
@@ -523,6 +519,34 @@ int main()
 	cb.flush();
 	std::cout << "Should have destroyed entity0\n";
 	DebugFunctions::Access::view_all_IDs(world);
+	printEnd();
+	/* ========================================================= */
+
+
+	/* Serialization/Snapshots
+		* Used for "saving" the state of the world. User must specify what Components they want saved.
+		* The order of the Args... supplied does not matter. The function will match a constexpr hash
+		* to ensure the correct type is deserialized
+	*/
+	/* ========================================================= */
+	printStart("Serialization");
+
+	/*
+		* Entity IDs 1 and 4 have one or more Component. All of the sequential IDs up to 4 (excluding 1)
+		* also have to be registered, so they are registered as free IDs
+	*/
+	world.addComponents<Stamina, Velocity>({ entity4 });
+	world.visit([](uint32_t entityID, std::type_index type)
+		{
+			std::cout << "entityID " << entityID << " has type " << type.name() << "\n";
+		});
+	world.serialize<Health, Stamina, Velocity, Position>();
+	std::cout << "Serialized\n";
+
+	World world2;
+	world2.deserialize<Health, Stamina, Velocity, Position>();
+	DebugFunctions::Access::view_all_IDs(world2);
 
 }
+
 #endif

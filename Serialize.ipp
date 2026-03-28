@@ -5,7 +5,6 @@
 template <typename Arg>
 void Serialize::_match_(size_t hash, World& world, std::ifstream& iffile)
 {
-	std::cout << "checking " << typeid(Arg).name() << " hash: " << getHash<Arg>() << " vs file hash: " << hash << "\n";
 	if (getHash<Arg>() == hash)
 		world.m_components.at(getTypeIndex<Arg>())->deserialize(iffile);
 }
@@ -59,9 +58,6 @@ void Serialize::_create_entities_(World& world)
 		return;
 
 	size_t highestID = *(std::max_element(setIDs.begin(), setIDs.end()));
-
-	for (auto& e : setIDs)
-		std::cout << e << ", ";
 
 	//creating [0, highestID]
 	for (uint32_t i{ 0 }; i <= highestID; ++i)

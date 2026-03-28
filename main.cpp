@@ -16,36 +16,71 @@
 
 struct Health
 {
-	float health = 100.0f;
+	float hlth = 100.0f;
 };
 
-struct Stamina
-{
-	float stamina = 100.0f;
-};
+struct PlayerTag : public TagBase {};
 
 int main()
 {
-	
 	World world;
-	auto entity0 = world.createEntity();
-	auto entity1 = world.createEntity();
-	auto entity2 = world.createEntity();
-	auto entity3 = world.createEntity();
 
-	
-	world.addComponents<Health, Stamina>({ entity1, entity3 });
-	world.serialize<Health, Stamina>("test.bin");
-	
+	world.createEntities(5); //0-4
+	world.registerComponent<Health>();
+	world.registerComponent<PlayerTag>();
 
-	// then deserialize into a fresh world
-	
-	
-	World world2;
-	world2.deserialize<Health, Stamina>("test.bin");
-	DebugFunctions::Access::view_dense_size<Health>(world2);
-	DebugFunctions::Access::view_dense_size<Stamina>(world2);
 
-	DebugFunctions::Access::view_all_IDs(world2);
-	
+	world.addComponents<Health, PlayerTag>({ 0, 1, 2});
+
+	auto view = world.view<Health, PlayerTag>(); //register view
+
+	auto statusLambda = [&view](uint32_t entityID)
+		{
+			std::cout << "EntityID " << entityID << " has Health and PlayerTag: " << std::boolalpha << view.contains(entityID) << "\n";
+		};
+
+	auto halfLambda = [](Health& h)
+		{
+			h.hlth /= 2;
+		};
+	auto printLambda = [](uint32_t entityID, Health& h)
+		{
+			std::cout << "ID: " << entityID << ", Health: " << h.hlth << "\n";
+		};
+
+	view.each(statusLambda);
+
+	//Entity 2 was originally in the view, but has been removed due to loss of necessary Component Stamina
+	world.removeComponent<PlayerTag>(2);
+	std::cout << "\nRemoved entity2's PlayerTag Component\n\n";
+	view.each(statusLambda);
+	std::cout << "\n";
+
+
+
+	//Half health and Stamina of all entities in the View
+	view.each(printLambda);
+	std::cout << "\n";
+	view.each(halfLambda);
+	view.each(printLambda);
+	std::cout << "\n";
+
+
+
+	// Get assumes user-responsibility that the entityID passed IS in the view. If not a OOB index will be thrown.
+	auto& h = view.get<Health>(0); //directly modify entity0's health
+	h.hlth -= 35.4f;
+	view.each(printLambda);
+	std::cout << "\n";
+
+	//Show how many entities are in the internal Vector of Health and Stamina
+	DebugFunctions::Access::view_sparseSet_dense<Health>(world);
+	DebugFunctions::Access::view_sparseSet_dense<PlayerTag>(world);
+
+	//View recalculates the smallest Component on every "each" call. O(n) operation for however many Components the view contains
+	std::cout << "Size of the Component in the View with the least entities: " << view.size() << "\n";
+	//Check if View has any entities. Checks if internal smallest_Component's size is 0
+	std::cout << "View is empty? " << std::boolalpha << view.empty() << "\n";
+
+
 }
