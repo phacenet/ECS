@@ -20,6 +20,25 @@ uint32_t World::createEntity()
 	return newID;
 }
 
+//private
+void World::_register_aliveID_()
+{
+	uint32_t newID;
+
+	/* Use next free entityID */
+	newID = m_nextEntityID++;
+	/* Insert newID into aliveIDs for both cases */
+	m_aliveIDs.insert(newID);
+}
+
+//private
+void World::_register_freeID_()
+{
+	uint32_t newID;
+	newID = m_nextEntityID++;
+	m_freeIDs.push(newID);
+}
+
 std::vector<uint32_t> World::createEntities(uint32_t numEntities)
 {
 	std::vector<uint32_t> new_entities;

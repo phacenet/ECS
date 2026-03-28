@@ -10,7 +10,7 @@ class World;
 class Serialize
 {
 private:
-	template <typename Arg, typename ...Args>
+	template <typename Arg>
 	void _match_(size_t hash, World& world, std::ifstream& iffile);
 
 	template <typename... Args>

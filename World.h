@@ -50,22 +50,9 @@ private:
 			registerComponent<T>();
 	}
 
-	void _register_aliveID_()
-	{
-		uint32_t newID;
+	void _register_aliveID_();
 
-		/* Use next free entityID */
-		newID = m_nextEntityID++;
-		/* Insert newID into aliveIDs for both cases */
-		m_aliveIDs.insert(newID);
-	}
-
-	void _register_freeID_()
-	{
-		uint32_t newID;
-		newID = m_nextEntityID++;
-		m_freeIDs.push(newID);
-	}
+	void _register_freeID_();
 	/* ============================================================ */
 public:
 	uint32_t createEntity();

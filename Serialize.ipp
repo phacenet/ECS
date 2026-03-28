@@ -2,9 +2,10 @@
 
 
 //private helper
-template <typename Arg, typename ...Args>
+template <typename Arg>
 void Serialize::_match_(size_t hash, World& world, std::ifstream& iffile)
 {
+	std::cout << "checking " << typeid(Arg).name() << " hash: " << getHash<Arg>() << " vs file hash: " << hash << "\n";
 	if (getHash<Arg>() == hash)
 		world.m_components.at(getTypeIndex<Arg>())->deserialize(iffile);
 }
@@ -41,8 +42,8 @@ void Serialize::deserialize(World& world, const char* filename)
 			throw std::logic_error("Failed to read passed file's hash");
 
 		((_match_<Args>(hash, world, inFile)), ...);
-		_create_entities_<Args...>(world);
 	}
+	_create_entities_<Args...>(world);
 }
 
 //private
@@ -54,7 +55,14 @@ void Serialize::_create_entities_(World& world)
 	((setIDs.insert((world.m_components.at(getTypeIndex<Args>())->getDense()).begin(),
 					(world.m_components.at(getTypeIndex<Args>())->getDense()).end())), ...);
 
+	if (setIDs.empty())
+		return;
+
 	size_t highestID = *(std::max_element(setIDs.begin(), setIDs.end()));
+
+	for (auto& e : setIDs)
+		std::cout << e << ", ";
+
 	//creating [0, highestID]
 	for (uint32_t i{ 0 }; i <= highestID; ++i)
 	{

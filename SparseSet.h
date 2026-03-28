@@ -132,7 +132,7 @@ public:
 	{
 		if (inFile.is_open())
 		{
-			uint32_t numEntities;
+			size_t numEntities;
 			inFile.read(reinterpret_cast<char*>(&numEntities), sizeof(numEntities));
 
 			std::vector<uint32_t> dense;
