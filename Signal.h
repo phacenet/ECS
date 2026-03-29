@@ -5,7 +5,6 @@
 
 #include "SignalBase.h"
 #include "ComponentIndexing.h" //for storing a unique address for functionPtr
-#include <string> //temp for DEBUG
 
 struct CallbackToken
 {

@@ -84,7 +84,6 @@ public:
 		return false;
 	}
 
-	/* Returned T* before changing to T& */
 	T& get(uint32_t entityID)
 	{
 		uint32_t dense_index = m_sparse[entityID];
