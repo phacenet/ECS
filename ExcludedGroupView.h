@@ -18,6 +18,8 @@ private:
 	Group<std::tuple<Owned...>, std::tuple<Unowned...>>* m_parent = nullptr;
 	std::tuple<SparseSet<Filtered>*...> m_filteredSets;
 
+	template <typename T>
+	auto _filter_type_(uint32_t entityID) -> decltype(auto);
 
 public:
 	//Ctor

@@ -65,3 +65,12 @@ template <typename T>
 struct is_invocable_with_id
     : std::bool_constant <std::is_invocable_v<T, uint32_t>>{};
 //====================================================================
+
+template <typename Tuple>
+struct to_sparse_ptr_tuple;
+
+template <typename... Ts>
+struct to_sparse_ptr_tuple<std::tuple<Ts...>>
+{
+    using type = std::tuple<SparseSet<Ts>*...>;
+};

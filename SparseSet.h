@@ -247,6 +247,7 @@ private:
 	std::vector<uint32_t> m_dense;
 	std::vector<ObserverBase*> m_observersOnAdd;
 	std::vector<ObserverBase*> m_observersOnRemove;
+	bool m_groupOwned = false;
 
 public:
 

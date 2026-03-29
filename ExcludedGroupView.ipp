@@ -28,36 +28,62 @@ void ExcludedGroupView<std::tuple<Owned...>, std::tuple<Unowned...>, std::tuple<
 {
 	auto& vec = (std::get<0>(m_parent->m_ownedSets))->getDense();
 
+	using all_types = decltype(std::tuple_cat(std::declval<std::tuple<Owned...>>(), std::declval<std::tuple<Filtered...>>()));
+	using owned_types = typename Filter<is_not_tag, std::tuple<Owned...>>::type;
+	using all_filtered = typename Filter<is_not_tag, all_types>::type;
+
 	for (uint32_t entityID : vec)
 	{
 		if (!((std::get<SparseSet<Filtered>*>(m_filteredSets)->has(entityID)) && ...))
 			continue;
 
+		auto result = std::tuple_cat(_filter_type_<Owned>(entityID)..., _filter_type_<Filtered>(entityID)...);
+		auto owned_result = std::tuple_cat(_filter_type_<Owned>(entityID)...);
+
 		//entity + owned + filtered
-		if constexpr (std::is_invocable_v<T, uint32_t, Owned&..., Filtered&...>)
-			std::forward<T>(func)(entityID, (std::get<SparseSet<Owned>*>(m_parent->m_ownedSets)->get(entityID))...,
-				(std::get<SparseSet<Filtered>*>(m_filteredSets)->get(entityID))...);
+		if constexpr (is_invocable_with_tuple_and_id<T, uint32_t, all_filtered>::value)
+			std::apply([&](auto&... args) {func(entityID, args...); }, result);
+
 		//entity + owned
-		else if constexpr (std::is_invocable_v<T, uint32_t, Owned&...>)
-			std::forward<T>(func)(entityID, (std::get<SparseSet<Owned>*>(m_parent->m_ownedSets)->get(entityID))...);
+		else if constexpr (is_invocable_with_tuple_and_id<T, uint32_t, owned_types>::value)
+			std::apply([&](auto&... args) {func(entityID, args...); }, owned_result);
 
 		//owned + filtered
-		else if constexpr (std::is_invocable_v<T, Owned&..., Filtered&...>)
-			std::forward<T>(func)((std::get<SparseSet<Owned>*>(m_parent->m_ownedSets)->get(entityID))...,
-				(std::get<SparseSet<Filtered>*>(m_filteredSets)->get(entityID))...);
+		else if constexpr (is_invocable_with_tuple<T, all_filtered>::value)
+			std::apply([&](auto&... args) {func(args...); }, result);
+
 		//owned only
-		else if constexpr (std::is_invocable_v<T, Owned&...>)
-			std::forward<T>(func)((std::get<SparseSet<Owned>*>(m_parent->m_ownedSets)->get(entityID))...);
+		else if constexpr (is_invocable_with_tuple<T, owned_types>::value)
+			std::apply([&](auto&... args) {func(args...); }, owned_result);
 
 		//entity only
-		else if constexpr (std::is_invocable_v<T, uint32_t>)
-			std::forward<T>(func)(entityID);
+		else if constexpr (is_invocable_with_id<T>::value)
+			func(entityID);
 
 		//fail
 		else
 			static_assert(always_false<T>, "Unsupported callable signature");
 	}
 }
+
+//private helper for each
+template <typename... Owned, typename...Unowned, typename... Filtered>
+template <typename T>
+auto ExcludedGroupView<std::tuple<Owned...>, std::tuple<Unowned...>, std::tuple<Filtered...>>::_filter_type_(uint32_t entityID) -> decltype(auto)
+{
+	if constexpr (std::is_base_of_v<TagBase, T>)
+		return std::tuple<>{};
+
+	else if constexpr ((std::is_same_v<T, Owned> || ...))
+		return std::forward_as_tuple(std::get<SparseSet<T>*>(m_parent->m_ownedSets)->get(entityID));
+
+	else if constexpr ((std::is_same_v<T, Filtered> || ...))
+		return std::forward_as_tuple(std::get<SparseSet<T>*>(m_filteredSets)->get(entityID));
+
+	else
+		static_assert(always_false<T>, "Type not found in Owned... or Filtered...");
+}
+
 
 template <typename ...Owned, typename ...Unowned, typename... Filtered>
 bool ExcludedGroupView<std::tuple<Owned...>, std::tuple<Unowned...>, std::tuple<Filtered...>>::contains(uint32_t entityID)
@@ -75,12 +101,11 @@ bool ExcludedGroupView<std::tuple<Owned...>, std::tuple<Unowned...>, std::tuple<
 
 template <typename ...Owned, typename ...Unowned, typename... Filtered>
 template <typename T>
-T& ExcludedGroupView<std::tuple<Owned...>, std::tuple<Unowned...>, std::tuple<Filtered...>>::get(uint32_t entityID) //NEED FIX FOR TAGBASE, then need to fix each
+T& ExcludedGroupView<std::tuple<Owned...>, std::tuple<Unowned...>, std::tuple<Filtered...>>::get(uint32_t entityID)
 {
-	using all_types = decltype(std::tuple_cat(std::declval(std::tuple<Owned...>(), std::tuple<Filtered...>())));
-	using filtered_tuple = typename Filter<is_not_tag, all_types>::type;
+	static_assert(!std::is_base_of_v<TagBase, T>, "Classes inheriting from TagBase have no Data to fetch");
 
-	if constexpr (sizeof...(Filtered) > 0 && has_type<T, std::tuple<Unowned...>>::value)
+	if constexpr (sizeof...(Filtered) > 0 && has_type<T, std::tuple<Filtered...>>::value)
 		return std::get<SparseSet<T>*>(m_filteredSets)->get(entityID);
 
 	else
