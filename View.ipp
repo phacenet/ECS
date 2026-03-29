@@ -67,7 +67,7 @@ void View<Args...>::each(T&& lambda)
 		};
 		auto result = std::tuple_cat(filterLambda.template operator()<Args>()...);
 
-		using filtered_tuple = typename Filter < is_not_tag, std::tuple<Args...>>::type;
+		using filtered_tuple = typename Filter <is_not_tag, std::tuple<Args...>>::type;
 
 		if (all_have)
 		{
@@ -86,7 +86,7 @@ void View<Args...>::each(T&& lambda)
 				lambda(entityID);
 
 			else
-				static_assert(always_false<T>, "Unsupported callable signature");
+				static_assert(always_false<T>, "Unsupported callable signature"); //do not pass a TagBase in the lambda
 		}
 	}
 }
@@ -96,6 +96,7 @@ template <typename ...Args>
 template <typename T>
 T& View<Args...>::get(uint32_t entityID)
 {
+	static_assert(is_not_tag<T>::value, "Cannot get data for class inheriting from TagBase");
 	return std::get<SparseSet<T>*>(m_storage)->get(entityID);
 }
 

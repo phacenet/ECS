@@ -63,20 +63,28 @@ template <typename ...Owned, typename ...Unowned, typename... Filtered>
 bool ExcludedGroupView<std::tuple<Owned...>, std::tuple<Unowned...>, std::tuple<Filtered...>>::contains(uint32_t entityID)
 {
 	bool inOwned = ((std::get<SparseSet<Owned>*>(m_parent->m_ownedSets))->has(entityID) && ...);
-	bool inFiltered = ((std::get<SparseSet<Filtered>*>(m_filteredSets))->has(entityID) && ...);
+	
+	if constexpr (sizeof...(Filtered) > 0)
+	{
+		bool inFiltered = ((std::get<SparseSet<Filtered>*>(m_filteredSets))->has(entityID) && ...);
+		return (inOwned && inFiltered);
+	}
 
-	return (inOwned && inFiltered);
+	return (inOwned);
 }
 
 template <typename ...Owned, typename ...Unowned, typename... Filtered>
 template <typename T>
-T& ExcludedGroupView<std::tuple<Owned...>, std::tuple<Unowned...>, std::tuple<Filtered...>>::get(uint32_t entityID)
+T& ExcludedGroupView<std::tuple<Owned...>, std::tuple<Unowned...>, std::tuple<Filtered...>>::get(uint32_t entityID) //NEED FIX FOR TAGBASE, then need to fix each
 {
-	if constexpr (has_type<T, std::tuple<Owned...>>::value)
-		return std::get<SparseSet<T>*>(m_parent->m_ownedSets)->get(entityID);
+	using all_types = decltype(std::tuple_cat(std::declval(std::tuple<Owned...>(), std::tuple<Filtered...>())));
+	using filtered_tuple = typename Filter<is_not_tag, all_types>::type;
+
+	if constexpr (sizeof...(Filtered) > 0 && has_type<T, std::tuple<Unowned...>>::value)
+		return std::get<SparseSet<T>*>(m_filteredSets)->get(entityID);
 
 	else
-		return std::get<SparseSet<T>*>(m_filteredSets)->get(entityID);
+		return std::get<SparseSet<T>*>(m_parent->m_ownedSets)->get(entityID);
 }
 
 template <typename ...Owned, typename ...Unowned, typename... Filtered>
@@ -94,18 +102,22 @@ size_t ExcludedGroupView<std::tuple<Owned...>, std::tuple<Unowned...>, std::tupl
 template <typename ...Owned, typename ...Unowned, typename... Filtered>
 size_t ExcludedGroupView<std::tuple<Owned...>, std::tuple<Unowned...>, std::tuple<Filtered...>>::size(ComputationType type)
 {
-	std::vector<uint32_t> vec = std::get<0>(m_parent->m_ownedSets)->getDense();
-	uint32_t intersects = 0;
-
-	for (uint32_t i{ 0 }; i < m_parent->m_len; ++i)
+	if constexpr (sizeof...(Filtered) > 0)
 	{
-		uint32_t entityID = vec[i];
+		std::vector<uint32_t> vec = std::get<0>(m_parent->m_ownedSets)->getDense();
+		uint32_t intersects = 0;
 
-		//Owned ID not found in Unowned
-		if ((std::get<SparseSet<Filtered>*>(m_filteredSets)->has(entityID) && ...))
-			++intersects;
+		for (uint32_t i{ 0 }; i < m_parent->m_len; ++i)
+		{
+			uint32_t entityID = vec[i];
+
+			//Owned ID not found in Unowned
+			if ((std::get<SparseSet<Filtered>*>(m_filteredSets)->has(entityID) && ...))
+				++intersects;
+		}
+		return intersects;
 	}
-	return intersects;
+	return m_parent->size();
 }
 
 

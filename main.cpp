@@ -21,6 +21,29 @@ struct Health
 
 struct PlayerTag : public TagBase {};
 
+struct DamageEvent
+{
+	uint32_t entityID;
+	float amount;
+};
+
+struct HealthSystem
+{
+	void onDamage(const DamageEvent& e)
+	{
+		std::cout << "Entity" << e.entityID << " took " << e.amount << " damage\n";
+	}
+};
+
+void freeOnDamage(const DamageEvent& e)
+{
+	std::cout << "Entity" << e.entityID << " took " << e.amount << " damage\n";
+}
+void freeAddHealth(const DamageEvent& e)
+{
+	std::cout << "Entity" << e.entityID << " gained " << e.amount << " health\n";
+}
+
 int main()
 {
 	World world;
@@ -31,56 +54,71 @@ int main()
 
 
 	world.addComponents<Health, PlayerTag>({ 0, 1, 2});
+	DebugFunctions::Access::view_all_IDs(world);
 
-	auto view = world.view<Health, PlayerTag>(); //register view
+	/* Group releases ownership when it is destroyed */
+	{
+		auto group = world.group<Health, PlayerTag>(); //auto group = Group<Position, Velocity>(world); OR Group<Health, Stamina> group(world);]
+	}
 
-	auto statusLambda = [&view](uint32_t entityID)
+	auto group = world.group<Health, PlayerTag>(get<Health>);
+
+	group.each([](Health& h)
 		{
-			std::cout << "EntityID " << entityID << " has Health and PlayerTag: " << std::boolalpha << view.contains(entityID) << "\n";
-		};
+			h.hlth += 5.55f;
+		});
 
-	auto halfLambda = [](Health& h)
+	group.each([](uint32_t entityID, Health& h)
 		{
-			h.hlth /= 2;
-		};
-	auto printLambda = [](uint32_t entityID, Health& h)
-		{
-			std::cout << "ID: " << entityID << ", Health: " << h.hlth << "\n";
-		};
+			h.hlth += 1.23f;
+			std::cout << "entityID: " << entityID << ", h.hlth: " << h.hlth << "\n";
+		});
 
-	view.each(statusLambda);
+	bool groupHas = group.contains(0);
+	auto& groupHealth = group.get<Health>(0); //need disallow playertag
+	auto groupCount = group.size();
 
-	//Entity 2 was originally in the view, but has been removed due to loss of necessary Component Stamina
 	world.removeComponent<PlayerTag>(2);
-	std::cout << "\nRemoved entity2's PlayerTag Component\n\n";
-	view.each(statusLambda);
+	auto groupAccurateCount = group.size(ComputationType::OWNED_AND_VIEWED);
+
+	std::cout << "Removed PlayerTag from entity 2\n";
+	group.each([](uint32_t entityID, Health& h)
+		{
+			h.hlth += 1.23f;
+			std::cout << "entityID: " << entityID << ", h.hlth: " << h.hlth << "\n";
+		});
+
+	std::cout << "Group: Has? " << std::boolalpha << groupHas << ", Position " << groupHealth.hlth << ", Count: " << groupCount << ", vs: " << groupAccurateCount << "\n";
+
+
+	auto groupExclusion = group.exclude<PlayerTag>();
+
+	groupExclusion.each([](Health& h)
+		{
+			h.hlth -= 1.05f;
+		});
+
+	groupExclusion.each([](uint32_t entityID)
+		{
+			std::cout << entityID << ", ";
+		});
 	std::cout << "\n";
 
+	groupExclusion.each([](uint32_t entityID, Health& h)
+		{
+			h.hlth -= 1.23f;
+			std::cout << "entityID: " << entityID << ", h.hlth " << h.hlth << "\n";
+		});
 
+	bool groupE_Has = groupExclusion.contains(0);
+	auto& groupE_vel = groupExclusion.get<Health>(0);
+	auto groupE_count = groupExclusion.size();
+	bool groupE_empty = groupExclusion.empty();
+	auto groupE_accurateCount = groupExclusion.size(ComputationType::OWNED_AND_VIEWED);
 
-	//Half health and Stamina of all entities in the View
-	view.each(printLambda);
-	std::cout << "\n";
-	view.each(halfLambda);
-	view.each(printLambda);
-	std::cout << "\n";
+	std::cout << "GroupExclusion: Has? " << std::boolalpha << groupE_Has << ", is empty? " << groupE_empty << ", Velocity " << groupE_vel.hlth << ", Count: " << groupE_count << ", vs: " << groupE_accurateCount << "\n";
 
-
-
-	// Get assumes user-responsibility that the entityID passed IS in the view. If not a OOB index will be thrown.
-	auto& h = view.get<Health>(0); //directly modify entity0's health
-	h.hlth -= 35.4f;
-	view.each(printLambda);
-	std::cout << "\n";
-
-	//Show how many entities are in the internal Vector of Health and Stamina
-	DebugFunctions::Access::view_sparseSet_dense<Health>(world);
-	DebugFunctions::Access::view_sparseSet_dense<PlayerTag>(world);
-
-	//View recalculates the smallest Component on every "each" call. O(n) operation for however many Components the view contains
-	std::cout << "Size of the Component in the View with the least entities: " << view.size() << "\n";
-	//Check if View has any entities. Checks if internal smallest_Component's size is 0
-	std::cout << "View is empty? " << std::boolalpha << view.empty() << "\n";
-
+	/* Ownership overlap throws */
+	//auto groupFail = Group<Health, Velocity>(world); //Group<Health, Stamina> group(world);]
 
 }

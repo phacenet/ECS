@@ -24,9 +24,9 @@ template <typename>
 inline constexpr bool always_false = false;
 
 
+/* Type constraints for if else branching in Views and Groups */
 
-
-template <template <typename> class Pred, typename TUPLE>
+template <template <typename> class Pred, typename TUPLE> //taken from https://stackoverflow.com/questions/33543287/how-to-filter-a-variadic-template-pack-by-type-derivation
 struct Filter;
 
 template <template <typename> class Pred, typename ... Ts>
@@ -42,7 +42,7 @@ struct Filter<Pred, std::tuple<Ts...>>
 template <typename T>
 struct is_not_tag : std::negation<std::is_base_of<TagBase, T>> {};
 
-
+//====================================================================
 template <typename F, typename Tuple>
 struct is_invocable_with_tuple;
 
@@ -64,3 +64,4 @@ struct is_invocable_with_tuple_and_id<F, ID, std::tuple<Types...>>
 template <typename T>
 struct is_invocable_with_id
     : std::bool_constant <std::is_invocable_v<T, uint32_t>>{};
+//====================================================================
