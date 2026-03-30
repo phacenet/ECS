@@ -42,3 +42,4 @@ public:
 };
 
 #include "ExcludedGroupView.ipp"
+
