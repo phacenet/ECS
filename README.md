@@ -7,7 +7,8 @@ The container class for all of the Component Data is called "SparseSet". The "wo
 a virtual class "ComponentStorage" so I can store the SparseSets in a vector instead of a tuple. I originally started with a tuple but found the vector to be both faster and simpler for storage.
 
 The most difficult portion was serialization and deserialization, specifically for storing user-created types, reading them, and then matching them back to the correct type for loading/storage. I ended up using 
-MSVC's __FUNCSIG__ to extract the type name at compile time, then use a compile-time Fowler-Noll-Vo (FNV) hash to map the type names to their correct deserialization functions.
+MSVC's __FUNCSIG__ to extract the type name at compile time, then use a compile-time Fowler-Noll-Vo (FNV) hash to map the type names to their correct deserialization functions. Once C++26 is released and supported by compilers,
+I imagine that the new Compile-time reflection system will be of great benefit in situations exactly like this.
 
 ## Organization
 I use .h files to forward declare classes and member functions, and .ipp files to fully implement them. I ran into a lot of circular dependency issues and found this to be the easiest way for me to fix those and keep track of things.
