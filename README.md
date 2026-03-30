@@ -9,8 +9,9 @@ a virtual class "ComponentStorage" so I can store the SparseSets in a vector ins
 The most difficult portion was serialization and deserialization, specifically for storing user-created types, reading them, and then matching them back to the correct type for loading/storage. I ended up using 
 MSVC's __FUNCSIG__ to extract the type name at compile time, then use a compile-time Fowler-Noll-Vo (FNV) hash to map the type names to their correct deserialization functions.
 
-## Style
+## Organization
 I use .h files to forward declare classes and member functions, and .ipp files to fully implement them. I ran into a lot of circular dependency issues and found this to be the easiest way for me to fix those and keep track of things.
+I wrote everything in the same folder, divided by filters in Visual Studio Community but have moved all of the source files into the src folder for the sake of brevity
 
 ## Features
 Observers, views, signals/sinks, dispatchers, groups, command buffers, and serialization/deserialization
