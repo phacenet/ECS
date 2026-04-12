@@ -20,10 +20,10 @@ Observers, views, signals/sinks, dispatchers, groups, command buffers, and seria
 ## Learning
 
 This was my first real exposure to a lot of compile-time concepts (if constexpr, type traits, heavy variadic templates). I ran into a lot of new problems and had to do a lot of googling and reading to find solutions. 
-Compared to EnTT, this is a very simple toy ECS. I found a lot of EnTT's source code very hard to follow and decipher (because of far they are able to push compile time metaprogramming!), and tried to make my solutions
+Compared to EnTT, this is a very simple ECS. I found a lot of EnTT's source code very hard to follow and decipher (because of far they are able to push compile time metaprogramming!), and tried to make my solutions
 as readable as possible.
 
 ## Requirements: C++20, written and tested on MSVC v.14.50
 
 ## Wrap-Up
-If you have any questions or suggestions, feel free to reach out and let me know! I had a great time building this ECS and am excited to explore more compile-time metaprogramming techniques in later projects!
+If you have any questions or suggestions, feel free to reach out and let me know!
