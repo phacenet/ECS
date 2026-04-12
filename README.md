@@ -1,4 +1,4 @@
-# Toy Entity Component System (ECS)
+# Entity Component System (ECS)
 
 After reading about Data Oriented Design and exploring some of the EnTT library's source code, I realized my understanding of C++ metaprogramming wasn't quite where I wanted it to be. The best way to learn is to practice, so I did!
 
