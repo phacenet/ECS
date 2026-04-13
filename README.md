@@ -1,29 +1,57 @@
-# Entity Component System (ECS)
+# Entity Component System (ECS) - C++20
 
-After reading about Data Oriented Design and exploring some of the EnTT library's source code, I realized my understanding of C++ metaprogramming wasn't quite where I wanted it to be. The best way to learn is to practice, so I did!
+## Design
 
-My ECS uses a Sparse and Dense Set to store entity IDs as unsigned 32 bit integers. Entity IDs are created sequentially (0,1,2,...) and are recycled into an unordered set for later re-use if they are destroyed. 
-The container class for all of the Component Data is called "SparseSet". The "world" is the primary user interface for interacting with entity IDs and Components. Components (SparseSets) inherit from
-a virtual class "ComponentStorage" so I can store the SparseSets in a vector instead of a tuple. I originally started with a tuple but found the vector to be both faster and simpler for storage.
+### Sparse/Dense Set Storage
+Each component type is stored in a "SparseSet<T>", which is a two-array structure that provides O(1) insert, remove, and lookup, while keeping component data contiguous in memory.
 
-The most difficult portion was serialization and deserialization, specifically for storing user-created types, reading them, and then matching them back to the correct type for loading/storage. I ended up using 
-MSVC's __FUNCSIG__ to extract the type name at compile time, then use a compile-time Fowler-Noll-Vo (FNV) hash to map the type names to their correct deserialization functions. Once C++26 is released and supported by compilers,
-I imagine that the new Compile-time reflection system will be of great benefit in situations exactly like this.
+- The **sparse-array** maps entity IDs to their index in the dense array
+- The **dense-array** stores entity IDs in a contiguous order
+- A parallel **data array** stores component data values at the same index as the dense array
 
-## Organization
-I use .h files to forward declare classes and member functions, and .ipp files to fully implement them. I ran into a lot of circular dependency issues and found this to be the easiest way for me to fix those and keep track of things.
-I wrote everything in the same folder, divided by filters in Visual Studio Community but have moved all of the source files into the src folder for the sake of brevity
+  Removal uses swap-and-pop to preserve contiguity without shifting elements. Helps to avoid cache-hostile pointer chasing of 'std::unordered_map' based designs. Also helps to ensure that iteration over all entities with a certain Component is a linear scan through contiguous memory.
 
-## Features
-Observers, views, signals/sinks, dispatchers, groups, command buffers, and serialization/deserialization
+  A partial specialization of the Component class, **tag components** handles tags (identifiers/markers with no data) separately, removing the data array and no-opping on some of the inherited functions.
 
-## Learning
+   ### Entity ID Management
+  Entity IDs are integer values issued sequentially. Destroyed IDs are pushed onto a stack and recycled on the next entity creation call (createEntity()). This helps to prevent unbounded ID growth for heavy usage of IDs.
 
-This was my first real exposure to a lot of compile-time concepts (if constexpr, type traits, heavy variadic templates). I ran into a lot of new problems and had to do a lot of googling and reading to find solutions. 
-Compared to EnTT, this is a very simple ECS. I found a lot of EnTT's source code very hard to follow and decipher (because of far they are able to push compile time metaprogramming!), and tried to make my solutions
-as readable as possible.
+  ### World Interface
+  World is the primary user-facing API, and the source of truth. It owns all component storage and exposes entity/component operations to other classes. A world is non-copyable and non-movable by design, but can be serialized (saved and loaded) to save the world state.
 
-## Requirements: C++20, written and tested on MSVC v.14.50
+  ### Views and Groups
 
-## Wrap-Up
-If you have any questions or suggestions, feel free to reach out and let me know!
+  **Views** iterate over entities that possess all of a set of component types. At construction, the view calculates the smallest viewed 'SparseSet' and uses it as the iteration source, checking membership in the remaining sets per entity.
+
+  **Groups** reorder component data across owned 'SparseSet's so that entities matching the group's signature are contiguous at the front of every owned array.
+
+  ### Signal/Sink System
+  A 'Signal<Ret(Args...)>' class stores callbacks as std::function objects alongside 'CallbackToken's (function ptr + instance ptr pairs) for O(n) disconnect. 'Sink' exposes a restricted interface to the user for connecting and disconnecting listeners.
+
+  ### Observers
+  'Observer' and 'GroupObserver' track which entities have had specific component transitions (add/remove) since the last time the observer was cleared. 'SparseSet' notifies registered observers directly on insert and remove. This ensures overhead is proportional to observed transitions instead of the total entity count.
+
+  ### Command Buffer
+  'CommandBuffer' defers entity and component mutations to a later flush point. This was important during implementation for potentially "dangerous" operations within a user-created lambda/std::function. This allows for queueing structural changes (creating new entity, add/removing component) during iteration without invalidating the sets being iterated.
+
+  ### Serialization
+  Serialization was the hardest architectural challenge during this project for me. 'SparseSet<T>' is a template, and hence component types are user defined, and there is no fixed type registry at compile time.
+
+  My solution was to use __FUNCSIG__ (on MSVC) to extract a stable type name string at compile time, then hash it with a compile-time Fowler-Noll-Vo (FNV) hash to produce a constexpr identifier per component type. On serialization, each SparseSet writes its type hash, entity count, entity IDs, and raw component data to a binary file. On deserialization, hashes are matched against a compile-time-generated dispatch table to route each block to the correct SparseSet<T>::derserialize().
+
+  This approach is a workaround for the (much anticipated!) absence of a reflection system in C++20. The coming C++26 static reflection (std::meta) will hopefully ease the implementation of future systems like this without compiler-specific solutions.
+
+  ## Features
+  Tag components, views, groups, signals/sinks, observers, command buffer, serialization/deserialization
+
+  ## Implementation Notes
+  - .h files contain class declarations and forward declarations
+  - .ipp files contain template implementations and are included at the bottom of their corresponding .h files. This layout/separation resolved my circular dependency issues that arose from the mutual template dependencies (World requires View, View requires World, etc)
+  - All component storage is owned by 'World' stored as 'ComponentStorage' (non template base-class) allowing component storage as a std::vector without type erasure overhead at the call site.
+  - I created and used a 'DebugFunctions::Access' struct for debugging purposes, but it is also useful for introspection into some of the underlying containers at runtime
+ 
+## Requirements
+- C++20, written and tested on MSVC v14.50 (uses __FUNCSIG__ for serialization, but also included a __PRETTY_FUNCTION__ #ifdef)
+
+## Closing
+I modeled this loosely after EnTT's ECS. I found EnTT's source code very difficult to understand and follow (because of how amazing they are at taking advantage of template metaprogramming!), and hence have attempted to make my solutions as simple and easy to follow as possible. If you have any questions or suggestions, feel free to reach out and let me know! 
