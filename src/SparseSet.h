@@ -52,7 +52,7 @@ public:
 
 		/* Before swap and pop, otherwise searches for garbage */
 		for (ObserverBase* obs : m_observersOnRemove)
-			obs->notifyAdd(entityID); //changed from notifyRemove(entityID). never got added to m_matchingentities before
+			obs->notifyAdd(entityID);
 
 		uint32_t dense_index = m_sparse[entityID];
 		uint32_t last_val = m_dense.back();
