@@ -9,9 +9,10 @@ Each component type is stored in a "SparseSet<T>", which is a two-array structur
 - The **dense-array** stores entity IDs in a contiguous order
 - A parallel **data array** stores component data values at the same index as the dense array
 
-  Removal uses swap-and-pop to preserve contiguity without shifting elements. Helps to avoid cache-hostile pointer chasing of 'std::unordered_map' based designs. Also helps to ensure that iteration over all entities with a certain Component is a linear scan through contiguous memory.
+- Removal uses swap-and-pop to preserve contiguity without shifting elements
+- Keeps component data in a contiguous block, ensuring iteration is a linear memory scan rather than the cache-hostile pointer chasing of std::unordered_map-based designs
 
-  A partial specialization of the Component class, **tag components** handles tags (identifiers/markers with no data) separately, removing the data array and no-opping on some of the inherited functions.
+  A partial specialization of the Component class, **tag component** handles tags (identifiers/markers with no data) separately, removing the data array and no-opping on some of the inherited functions.
 
    ### Entity ID Management
   Entity IDs are integer values issued sequentially. Destroyed IDs are pushed onto a stack and recycled on the next entity creation call (createEntity()). This helps to prevent unbounded ID growth for heavy usage of IDs.
@@ -37,7 +38,7 @@ Each component type is stored in a "SparseSet<T>", which is a two-array structur
   ### Serialization
   Serialization was the hardest architectural challenge during this project for me. 'SparseSet<T>' is a template, and hence component types are user defined, and there is no fixed type registry at compile time.
 
-  My solution was to use __FUNCSIG__ (on MSVC) to extract a stable type name string at compile time, then hash it with a compile-time Fowler-Noll-Vo (FNV) hash to produce a constexpr identifier per component type. On serialization, each SparseSet writes its type hash, entity count, entity IDs, and raw component data to a binary file. On deserialization, hashes are matched against a compile-time-generated dispatch table to route each block to the correct SparseSet<T>::derserialize().
+  My solution was to use __FUNCSIG__ (on MSVC) to extract a stable type name string at compile time, then hash it with a compile-time Fowler-Noll-Vo (FNV) hash to produce a constexpr identifier per component type. On serialization, each SparseSet writes its type hash, entity count, entity IDs, and raw component data to a binary file. On deserialization, hashes are matched against a compile-time-generated dispatch table to route each block to the correct SparseSet<T>::deserialize().
 
   This approach is a workaround for the (much anticipated!) absence of a reflection system in C++20. The coming C++26 static reflection (std::meta) will hopefully ease the implementation of future systems like this without compiler-specific solutions.
 
@@ -52,6 +53,23 @@ Each component type is stored in a "SparseSet<T>", which is a two-array structur
  
 ## Requirements
 - C++20, written and tested on MSVC v14.50 (uses __FUNCSIG__ for serialization, but also included a __PRETTY_FUNCTION__ #ifdef)
+
+## Syntax
+- A full view of the features can be found in the main.cpp file, with comments providing a high level overview. Printouts to the console also demonstrate how to use each relevant feature.
+```
+struct Health {float health = 100.0f;};
+struct Stamina {float stamina = 100.0f;};
+
+World world;
+auto entity0 = world.createEntity();
+std::vector<uint32_t> fiveEntities = world.createEntities(5);
+world.addComponents<Health, Stamina>({ entity0, fiveEntities[0] }); //registers Component if not already registered
+
+auto v = world.view<Health, Stamina>();
+v.each([](Health& h, Stamina& s) { h.health -= 10.0f; });
+
+world.removeComponent<Health>(entity0);
+``` 
 
 ## Closing
 I modeled this loosely after EnTT's ECS. I found EnTT's source code very difficult to understand and follow (because of how amazing they are at taking advantage of template metaprogramming!), and hence have attempted to make my solutions as simple and easy to follow as possible. If you have any questions or suggestions, feel free to reach out and let me know! 
